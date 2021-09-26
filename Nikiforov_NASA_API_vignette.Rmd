@@ -13,18 +13,64 @@ This is an R Markdown format used for publishing markdown documents to GitHub. W
 
 ## Including Code
 
-You can include R code in the document as follows:
+Install and load the **httr** and **jsonlite** packages if needed and load them in.
 
-```{r cars}
-summary(cars)
+```{r , echo=TRUE, eval=TRUE}
+library(tidyverse)
+library(httr)
+library(jsonlite)
 ```
 
-## Including Plots
+Use `GET` from the **httr** package to return information about a topic of interest (store the result as an R object).
 
-You can also embed plots, for example:
+We will query the API with the `/everything` endpoint to collect all news with the keyword "Astronomy" published since September 12. The results will be sorted by most popular news sources first.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+Discovery year: disc_year
+Discovery method: discoverymethod
+Number:
+
+
+```{r , echo=TRUE, eval=TRUE}
+exoDiscoveryYrMthd <- GET("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+disc_year,discoverymethod+from+pscomppars+where+disc_year+between+2010+and+2021&format=json")
+exoDiscoveryYrMthd
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Inspect the structure of the returned object (we looked a function to do this!). Add `max.level = 1` as an argument to minimize the output.
+
+We can determine the structure of an object using the `str()` function. 
+
+```{r , echo=TRUE, eval=TRUE}
+str(exoDiscoveryYrMthd, max.level = 1)
+```
+
+_Usually what you want is stored in something like content._
+
+_Common steps:_
+_- Grab the list element we want_
+_- Convert it to characters using `rawToChar()` (here it will have a JSON structure)_
+_- Convert it to a data frame with `fromJSON()` from the `jsonlite` package_
+
+_Perform these steps._ 
+
+
+We can pipe the raw bytes of _astronomyNews_ (`astronomyNews$content`) to the `rawToChar()` function for conversion to a character string. We can then pipe this string to the `fromJSON()` function to convert it to a list with an easy-to-view data from of our content.     
+
+```{r , echo=TRUE, eval=TRUE}
+exoDiscoveryContent <- exoDiscoveryYrMthd$content %>% rawToChar() %>% fromJSON() 
+str(exoDiscoveryContent)
+```
+
+```{r , echo=TRUE, eval=TRUE}
+exoDiscoveryHist <- ggplot(exoDiscoveryContent, aes(x = disc_year))
+exoDiscoveryHist + geom_histogram()
+#exoDiscoveryHist + geom_histogram(aes(fill = discoverymethod), position = "dodge")
+```
+
+
+Then look at the structure of the object!
+
+```{r , echo=TRUE, eval=TRUE}
+str(astroContent)
+```
+
+
