@@ -15,10 +15,11 @@ This is an R Markdown format used for publishing markdown documents to GitHub. W
 
 Install and load the **httr** and **jsonlite** packages if needed and load them in.
 
-```{r , echo=TRUE, eval=TRUE}
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
 library(tidyverse)
 library(httr)
 library(jsonlite)
+library(DT)
 ```
 
 Use `GET` from the **httr** package to return information about a topic of interest (store the result as an R object).
@@ -29,42 +30,63 @@ Discovery year: disc_year
 Discovery method: discoverymethod
 Number:
 
-
 ```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryYrMthd <- GET("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+disc_year,discoverymethod+from+pscomppars+where+disc_year+between+2010+and+2021&format=json")
-exoDiscoveryYrMthd
+# Retrieve exoplanet names, discovery year, and discovery method.
+# Defaults start in the year 1989 (earliest year in the pscomppars table)
+# and end in the current calendar year: format(Sys.Date(), "%Y").
+
+annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), include_controversial = 0){
+  # Create URL string
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbsmax,pl_orbeccen,pl_orbper,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,pl_controv_flag+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", include_controversial, "&format=json")
+  # Provide string to httr GET function
+  apiCall <- GET(urlString)
+  # Convert JSON content to data frame, rename columns
+  apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() 
+  
+  # Return formatted data frame
+  return(apiContent)
+}
+
+discoveryYrMthd <- annualExoDiscoveries(1989, 2021, include_controversial = 0)
+
+# Display in a searchable table using DT library's datatable function
+datatable(discoveryYrMthd)
 ```
 
-Inspect the structure of the returned object (we looked a function to do this!). Add `max.level = 1` as an argument to minimize the output.
-
-We can determine the structure of an object using the `str()` function. 
+## Exploratory Data Analysis
 
 ```{r , echo=TRUE, eval=TRUE}
-str(exoDiscoveryYrMthd, max.level = 1)
-```
-
-_Usually what you want is stored in something like content._
-
-_Common steps:_
-_- Grab the list element we want_
-_- Convert it to characters using `rawToChar()` (here it will have a JSON structure)_
-_- Convert it to a data frame with `fromJSON()` from the `jsonlite` package_
-
-_Perform these steps._ 
-
-
-We can pipe the raw bytes of _astronomyNews_ (`astronomyNews$content`) to the `rawToChar()` function for conversion to a character string. We can then pipe this string to the `fromJSON()` function to convert it to a list with an easy-to-view data from of our content.     
-
-```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryContent <- exoDiscoveryYrMthd$content %>% rawToChar() %>% fromJSON() 
-str(exoDiscoveryContent)
+table(discoveryYrMthd$st_spectype)
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryHist <- ggplot(exoDiscoveryContent, aes(x = disc_year))
-exoDiscoveryHist + geom_histogram()
-#exoDiscoveryHist + geom_histogram(aes(fill = discoverymethod), position = "dodge")
+exoDiscoveryHisto <- ggplot(discoveryYrMthd, aes(x = st_teff))
+exoDiscoveryHisto + geom_histogram() +
+  labs(x = "Stellar Effective Temperature [K]", y = "Count",
+       title = "The distribution of planets as a function of stellar effective temperature") 
 ```
+
+
+```{r , echo=TRUE, eval=TRUE}
+exoDiscoveryHisto <- ggplot(discoveryYrMthd, aes(x = as.character(disc_year)))
+exoDiscoveryHisto + geom_bar(aes(fill = discoverymethod), position = "dodge", alpha = 0.5) +
+  labs(x = "Discovery year", y = "Count",
+       title = "Exoplanet discoveries over time", subtitle = "Grouped by discovery method") +
+  scale_fill_discrete(name = "Discovery method")
+```
+
+```{r , echo=TRUE, eval=TRUE}
+exoDiscoveryScatter <- ggplot(discoveryYrMthd, aes(x = log(pl_bmassj), y = pl_radj))
+exoDiscoveryScatter + geom_point(aes(col = pl_eqt, size = pl_bmassj), alpha = 0.6) +
+  geom_smooth()
+```
+
+
+```{r , echo=TRUE, eval=TRUE}
+exoDiscoveryScatter <- ggplot(discoveryYrMthd, aes(x = log(pl_orbper), y = pl_orbeccen))
+exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha = 0.6, position = "jitter")
+```
+
 
 
 Then look at the structure of the object!
