@@ -37,7 +37,7 @@ Number:
 
 annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), include_controversial = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbsmax,pl_orbeccen,pl_orbper,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,pl_controv_flag+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", include_controversial, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbsmax,pl_orbeccen,pl_orbper,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", include_controversial, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -50,13 +50,86 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 discoveryYrMthd <- annualExoDiscoveries(1989, 2021, include_controversial = 0)
 
 # Display in a searchable table using DT library's datatable function
-datatable(discoveryYrMthd)
+#datatable(discoveryYrMthd)
+discoveryYrMthd
 ```
 
 ## Exploratory Data Analysis
 
+Spectral types.
+
 ```{r , echo=TRUE, eval=TRUE}
-table(discoveryYrMthd$st_spectype)
+# Omit all rows with missing spectral type. Then, create new column (mainType) 
+# with main stellar types by using substr() to select only 
+# the first character of st_spectype
+spectralType <- discoveryYrMthd %>% select(st_spectype) %>% na.omit %>% 
+  mutate(mainType = substr(st_spectype, 1, 1), lumRatio = 10^())
+
+spectralType
+datatable(spectralType)
+```
+```{r , echo=TRUE, eval=TRUE}
+# Calculate habitable zone. 
+# Coeeficients provided by https://iopscience.iop.org/article/10.1088/2041-8205/787/2/L29/pdf
+# Re-factored to R from John Armstrong's Python code at
+# https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
+
+calcHZ <- function(t_eff, luminosityRatio){
+  
+  s_eff <- vector()
+  distanceFromStar <- vector()
+  
+  starTemp <- vector()
+  recentVenus <- vector()
+  runawayGreenhouse <- vector()
+  maxGreenhouse <- vector()
+  earlyMars <- vector()
+  fivemeRunaway <- vector()
+  tenthmeRunaway <- vector()
+  
+  s_eff_sun  = c(1.776, 1.107, 0.356, 0.320, 1.188, 0.99)
+  a <- c(2.136e-4, 1.332e-4, 6.171e-5, 5.547e-5, 1.433e-4, 1.209e-4)
+  b <- c(2.533e-8, 1.580e-8, 1.698e-9, 1.526e-9, 1.707e-8, 1.404e-8)
+  c <- c(-1.332e-11, -8.308e-12, -3.198e-12, -2.874e-12, -8.968e-12, -7.418e-12)
+  d <- c(-3.097e-15, -1.931e-15, -5.575e-16, -5.011e-16, -2.084e-15, -1.713e-15)
+  
+  t_star <- t_eff-5780
+  
+  for (i in 1:length(a)){
+    s_eff[i] <- s_eff_sun[i] + a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
+    distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
+  
+  }
+  
+  description = c("Optimistic, 1M Inner HZ - Recent Venus", "Conservative, 1M Inner HZ - Runaway Greenhouse",
+               "Conservative, 1M Outer HZ - Maximum Greenhouse", "Optimistic, 1M Outer HZ - Early Mars",
+               "Conservative, 5M Inner HZ - Runaway Greenhouse", "Conservative, 0.1M Inner HZ - Runaway Greenhouse")
+  
+  hzDescriptions <- data.frame(description, s_eff, distanceFromStar)
+  return(hzDescriptions)
+  
+}
+
+calcHZ(5780, 102.3)
+
+```
+
+
+
+
+
+The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
+
+1. The planet orbits an F, G, K, or M star.
+2. The planet orbits within the optimistic (aka empirical) habitable zone defined by Kopparapu et al. (2014) and corrected for eccentric orbits by Méndez & Rivera-Valentín (2017).
+3. The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses.
+
+
+```{r , echo=TRUE, eval=TRUE}
+stellarTypeHistogram <- ggplot(spectralType, aes(x = mainType))
+stellarTypeHistogram + geom_bar() +
+  labs(x = "Stellar type", y = "Count",
+       title = "Planetary discoveries as a function of main stellar type") 
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
