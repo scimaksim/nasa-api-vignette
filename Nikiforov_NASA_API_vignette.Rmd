@@ -5,6 +5,10 @@ output: github_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(httr)
+library(jsonlite)
+library(DT)
 ```
 
 ## GitHub Documents
@@ -13,69 +17,21 @@ This is an R Markdown format used for publishing markdown documents to GitHub. W
 
 ## Including Code
 
-Install and load the **httr** and **jsonlite** packages if needed and load them in.
-
-```{r , echo=TRUE, eval=TRUE, message=FALSE}
-library(tidyverse)
-library(httr)
-library(jsonlite)
-library(DT)
-```
-
-Use `GET` from the **httr** package to return information about a topic of interest (store the result as an R object).
-
-We will query the API with the `/everything` endpoint to collect all news with the keyword "Astronomy" published since September 12. The results will be sorted by most popular news sources first.
-
 Discovery year: disc_year
 Discovery method: discoverymethod
 Number:
 
 ```{r , echo=TRUE, eval=TRUE}
-# Retrieve exoplanet names, discovery year, and discovery method.
-# Defaults start in the year 1989 (earliest year in the pscomppars table)
-# and end in the current calendar year: format(Sys.Date(), "%Y").
-
-annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), include_controversial = 0){
-  # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbsmax,pl_orbeccen,pl_orbper,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", include_controversial, "&format=json")
-  # Provide string to httr GET function
-  apiCall <- GET(urlString)
-  # Convert JSON content to data frame, rename columns
-  apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() 
-  
-  # Return formatted data frame
-  return(apiContent)
-}
-
-discoveryYrMthd <- annualExoDiscoveries(1989, 2021, include_controversial = 0)
-
-# Display in a searchable table using DT library's datatable function
-#datatable(discoveryYrMthd)
-discoveryYrMthd
-```
-
-## Exploratory Data Analysis
-
-Spectral types.
-
-```{r , echo=TRUE, eval=TRUE}
-# Omit all rows with missing spectral type. Then, create new column (mainType) 
-# with main stellar types by using substr() to select only 
-# the first character of st_spectype
-spectralType <- discoveryYrMthd %>% select(st_spectype) %>% na.omit %>% 
-  mutate(mainType = substr(st_spectype, 1, 1), lumRatio = 10^())
-
-spectralType
-datatable(spectralType)
-```
-```{r , echo=TRUE, eval=TRUE}
-# Calculate habitable zone. 
-# Coeeficients provided by https://iopscience.iop.org/article/10.1088/2041-8205/787/2/L29/pdf
+# Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
+# Distances returned in Astronomical Units (AU).
+# Formula and it coefficients provided by Kopparapu et al.
+# https://iopscience.iop.org/article/10.1088/2041-8205/787/2/L29
 # Re-factored to R from John Armstrong's Python code at
 # https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
 
-calcHZ <- function(t_eff, luminosityRatio){
+calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   
+  # Initiate vectors
   s_eff <- vector()
   distanceFromStar <- vector()
   
@@ -95,9 +51,22 @@ calcHZ <- function(t_eff, luminosityRatio){
   
   t_star <- t_eff-5780
   
+  if(planetMass){
+    
+  } else if (planetMass){
+    
+  } else if (planetMass){
+    
+  } else{
+    
+  }
+  
   for (i in 1:length(a)){
     s_eff[i] <- s_eff_sun[i] + a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
     distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
+    
+    optimisticInnerDist <- distanceFromStar[1]
+    optimisticOuterDist <- distanceFromStar[4]
   
   }
   
@@ -106,17 +75,117 @@ calcHZ <- function(t_eff, luminosityRatio){
                "Conservative, 5M Inner HZ - Runaway Greenhouse", "Conservative, 0.1M Inner HZ - Runaway Greenhouse")
   
   hzDescriptions <- data.frame(description, s_eff, distanceFromStar)
-  return(hzDescriptions)
+
+  optimisticInnerDist <- distanceFromStar[1]
+  optimisticOuterDist <- distanceFromStar[4]
+  
+  optimisticInnerFlux <- s_eff[1]
+  optimisticOuterFlux <- s_eff[4]
+  
+  return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
+              optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
   
 }
 
-calcHZ(5780, 102.3)
-
+sampleCalc <- calculateHZ(5780, 102.3, 9)
+sampleCalc
 ```
 
 
 
+```{r , echo=TRUE, eval=TRUE}
+# Retrieve exoplanet names, discovery year, and discovery method.
+# Defaults start in the year 1989 (earliest year in the pscomppars table)
+# and end in the current calendar year: format(Sys.Date(), "%Y").
 
+annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), include_controversial = 0){
+  # Create URL string
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", include_controversial, "&format=json")
+  # Provide string to httr GET function
+  apiCall <- GET(urlString)
+  # Convert JSON content to data frame, rename columns
+  apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() %>%
+    mutate(luminosityRatio = 10^(st_lum)) 
+  
+  # Return formatted data frame
+  return(apiContent)
+}
+
+discoveryYrMthd <- annualExoDiscoveries()
+
+# Display in a searchable table using DT library's datatable function
+#datatable(discoveryYrMthd)
+discoveryYrMthd
+```
+
+## Exploratory Data Analysis
+
+```{r , echo=TRUE, eval=TRUE}
+
+exoData <- annualExoDiscoveries()
+
+exoData %>% mutate(innerHZ = NA, outerHZ = NA)
+exoData %>% mutate(spectralClass = NA)
+
+
+
+for(i in 1:length(exoData$pl_bmasse)){
+  
+  if(!is.na(exoData$st_spectype[i])){
+    exoData$spectralClass[i] <- substr(exoData$st_spectype[i], 1, 1)
+  } else {
+    exoData$spectralClass[i] <- NA
+  }
+  
+  
+  if(!is.na(exoData$pl_bmasse[i]) & exoData$pl_bmasse[i] <= 10 & exoData$pl_bmasse[i] >= 0.1) {
+    
+
+      hzVars <- calcHZ(exoData$st_teff[i], 
+             exoData$luminosityRatio[i],
+             exoData$pl_bmasse[i])
+
+      exoData$innerHZ[i] <- hzVars[[1]]
+      exoData$outerHZ[i] <- hzVars[[2]]
+
+} else {
+  exoData$innerHZ[i] <- NA
+  exoData$outerHZ[i] <- NA
+  }
+}
+
+exoData
+```
+
+```{r , echo=TRUE, eval=TRUE}
+
+habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 10, 
+                               minEarthRadius = 0.5, maxEarthRadius = 2.5){
+  
+  habitablePlanets <- data %>% select(pl_name, spectralType, pl_bmasse, pl_rade) %>% 
+    filter(spectralType %in% c("F", "G", "K", "M") & (pl_bmasse >= minEarthMass) &
+             (pl_bmasse <= maxEarthMass) & (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius))
+  
+  return(habitablePlanets)
+  habitablePlanets
+}
+
+habitableExoPlanets <- habitableExoFinder(exoData)
+
+```
+
+Spectral types.
+
+```{r , echo=TRUE, eval=TRUE}
+# Omit all rows with missing spectral type. Then, create new column (mainType) 
+# with main stellar types by using substr() to select only 
+# the first character of st_spectype
+spectralType <- discoveryYrMthd %>% select(st_spectype) %>% na.omit %>% 
+  mutate(mainType = substr(st_spectype, 1, 1), lumRatio = 10^())
+
+spectralType
+datatable(spectralType)
+```
 
 The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
 
