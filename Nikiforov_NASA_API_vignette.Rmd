@@ -9,6 +9,7 @@ library(tidyverse)
 library(httr)
 library(jsonlite)
 library(DT)
+library(latex2exp)
 ```
 
 ## GitHub Documents
@@ -154,12 +155,15 @@ exoData %>% select(pl_name, pl_bmasse, pl_rade, pl_eqt, pl_orbsmax, innerHZ, out
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-
+# Create function to identify potentially habitable exoplanets. 
+# Default function parameters provided by Planetary Habitability Laboratory, 
+# http://phl.upr.edu/projects/habitable-exoplanets-catalog
 habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5, 
                                minEarthRadius = 0.5, maxEarthRadius = 1.5,
                                maxInnerFlux = 1.5, maxOuterFlux = 0.20,
                                minTemp = 273, maxTemp = 340){
   
+  # Subset data using provided parameters
   habitablePlanets <- data %>% select(pl_name, pl_eqt, spectralClass, pl_bmasse, pl_rade, 
                                       pl_orbeccen, pl_orbsmax, innerHZ, outerHZ, innerFlux, outerFlux) %>% 
     filter(spectralClass %in% c("F", "G", "K", "M") & (pl_orbsmax >= innerHZ) & (pl_orbsmax <= outerHZ) & (pl_bmasse >= minEarthMass) &
@@ -170,10 +174,17 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
   return(habitablePlanets)
 }
 
+# Run function using "optimistic" parameters from
+# Planetary Habitability Laboratory
 listHabitablePlanets <- habitableExoFinder(exoData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
 listHabitablePlanets
 
+```
+
+```{r , echo=TRUE, eval=TRUE}
+habitablePlanetSpecs <- ggplot(listHabitablePlanets, aes(x = pl_bmasse, y = pl_rade))
+habitablePlanetSpecs + geom_point(aes(color = pl_eqt), alpha = 0.6, position = "jitter")
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -186,17 +197,6 @@ b_out <- 1.4286e-9
 
 l_in <- c(0.72, 0.895, 0.72, 0.485)
 l_out <- c(1.77, 1.67, 1.95, 2.4)
-```
-
-```{r , echo=TRUE, eval=TRUE}
-
-exoData <- annualExoDiscoveries()
-
-discoveryMethods <- ggplot(exoData, aes(x = as.character(discoverymethod)))
-discoveryMethods + geom_bar() +
-  labs(x = "Discovery method", y = "Count",
-       title = "Exoplanet discoveries over time", subtitle = "Grouped by discovery method") +
-  theme(axis.text.x = element_text(angle = 45))
 ```
 
 
@@ -237,12 +237,27 @@ annualDiscoveries + geom_bar(aes(fill = discoverymethod), alpha = 0.8, position 
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-exoData <- annualExoDiscoveries() 
+# New vector with termporary data
+tempMassData <- annualExoDiscoveries() 
 
-massRadScatter <- ggplot(exoData, aes(x = log(pl_bmassj), y = pl_radj))
-massRadScatter + geom_point(aes(col = pl_eqt, size = pl_bmassj), alpha = 0.6) 
+# Scatter plot of masses/radii for discovered exoplanets
+# Use LaTeX to denote the standard astronomical symbol for the Earth
+tempMassScatter <- ggplot(tempMassData, aes(x = log10(pl_bmasse), y = pl_rade))
+tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_bmasse), alpha = 0.6, position = "jitter") +
+  scale_color_gradientn(colours = heat.colors(5)) +
+  labs(x = TeX(r'(Mass $(log(M\oplus))]$))'), y = TeX(r'(Radius $(R\oplus)$)'),
+       title = "Comparison of radius and logarithmic mass amongst known exoplanets", col = "Equilbrium temperature (K)",
+       size = TeX(r'(Planet Mass $(M\oplus)$)'))
 ```
 
+```{r , echo=TRUE, eval=TRUE}
+tempMassData <- annualExoDiscoveries() 
+
+tempMassHisto <- ggplot(tempMassData, aes(x = log(pl_bmasse,10)))
+tempMassHisto + geom_histogram() +
+  labs(x = TeX(r'($log(M\oplus)$)'), y = "Count",
+       title = "The logarithmic distribution of mass in known exoplanets") 
+```
 
 ```{r , echo=TRUE, eval=TRUE}
 exoDiscoveryScatter <- ggplot(discoveryYrMthd, aes(x = log(pl_orbper), y = pl_orbeccen))
