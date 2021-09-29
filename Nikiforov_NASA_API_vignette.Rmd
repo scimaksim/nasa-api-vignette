@@ -98,9 +98,9 @@ sampleCalc
 # Defaults start in the year 1989 (earliest year in the pscomppars table)
 # and end in the current calendar year: format(Sys.Date(), "%Y").
 
-annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), include_controversial = 0){
+annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), controversial = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", include_controversial, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -124,10 +124,8 @@ discoveryYrMthd
 
 exoData <- annualExoDiscoveries()
 
-exoData %>% mutate(innerHZ = NA, outerHZ = NA)
-exoData %>% mutate(spectralClass = NA)
-
-
+exoData %>% mutate(innerHZ = NA, outerHZ = NA, innerFlux = NA, outerFlux = NA,
+                   spectralClass = NA)
 
 for(i in 1:length(exoData$pl_bmasse)){
   
@@ -147,10 +145,15 @@ for(i in 1:length(exoData$pl_bmasse)){
 
       exoData$innerHZ[i] <- hzVars[[1]]
       exoData$outerHZ[i] <- hzVars[[2]]
+      
+      exoData$innerFlux[i] <- hzVars[[3]]
+      exoData$outerFlux[i] <- hzVars[[4]]
 
 } else {
   exoData$innerHZ[i] <- NA
   exoData$outerHZ[i] <- NA
+  exoData$innerFlux[i] <- NA
+  exoData$outerFlux[i] <- NA
   }
 }
 
@@ -159,33 +162,49 @@ exoData
 
 ```{r , echo=TRUE, eval=TRUE}
 
-habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 10, 
-                               minEarthRadius = 0.5, maxEarthRadius = 2.5){
+habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5, 
+                               minEarthRadius = 0.5, maxEarthRadius = 1.5,
+                               maxInnerFlux = 1.5, maxOuterFlux = 0.20,
+                               minTemp = 273, maxTemp = 340){
   
-  habitablePlanets <- data %>% select(pl_name, spectralType, pl_bmasse, pl_rade) %>% 
-    filter(spectralType %in% c("F", "G", "K", "M") & (pl_bmasse >= minEarthMass) &
-             (pl_bmasse <= maxEarthMass) & (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius))
+  habitablePlanets <- data %>% select(pl_name, pl_eqt, spectralClass, pl_bmasse, pl_rade, 
+                                      pl_orbeccen, innerHZ, outerHZ, innerFlux, outerFlux) %>% 
+    filter(spectralClass %in% c("F", "G", "K", "M") & (pl_bmasse >= minEarthMass) &
+             (pl_bmasse <= maxEarthMass) & (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius) &
+             (innerFlux <= maxInnerFlux) & (outerFlux >= maxOuterFlux) &
+             (pl_eqt <= 340) & (pl_eqt >= 273))
   
   return(habitablePlanets)
-  habitablePlanets
 }
 
-habitableExoPlanets <- habitableExoFinder(exoData)
+listHabitablePlanets <- habitableExoFinder(exoData)
+listHabitablePlanets
 
 ```
-
-Spectral types.
 
 ```{r , echo=TRUE, eval=TRUE}
-# Omit all rows with missing spectral type. Then, create new column (mainType) 
-# with main stellar types by using substr() to select only 
-# the first character of st_spectype
-spectralType <- discoveryYrMthd %>% select(st_spectype) %>% na.omit %>% 
-  mutate(mainType = substr(st_spectype, 1, 1), lumRatio = 10^())
 
-spectralType
-datatable(spectralType)
+a_in <- 2.7619e-5
+b_in <- 3.8095e-9
+
+a_out <- 1.3786e-4
+b_out <- 1.4286e-9
+
+l_in <- c(0.72, 0.895, 0.72, 0.485)
+l_out <- c(1.77, 1.67, 1.95, 2.4)
 ```
+
+```{r , echo=TRUE, eval=TRUE}
+
+exoData <- annualExoDiscoveries()
+
+discoveryMethods <- ggplot(exoData, aes(x = as.character(discoverymethod)))
+discoveryMethods + geom_bar() +
+  labs(x = "Discovery method", y = "Count",
+       title = "Exoplanet discoveries over time", subtitle = "Grouped by discovery method") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
 
 The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
 
@@ -210,11 +229,17 @@ exoDiscoveryHisto + geom_histogram() +
 
 
 ```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryHisto <- ggplot(discoveryYrMthd, aes(x = as.character(disc_year)))
-exoDiscoveryHisto + geom_bar(aes(fill = discoverymethod), position = "dodge", alpha = 0.5) +
+
+exoData <- annualExoDiscoveries() 
+
+annualDiscoveries <- ggplot(exoData, aes(x = as.character(disc_year)))
+annualDiscoveries + geom_bar(aes(fill = discoverymethod), alpha = 0.8, position = "stack") +
   labs(x = "Discovery year", y = "Count",
        title = "Exoplanet discoveries over time", subtitle = "Grouped by discovery method") +
-  scale_fill_discrete(name = "Discovery method")
+  scale_fill_discrete(name = "Discovery method") +
+  theme(axis.text.x = element_text(angle = 45)) + 
+  geom_text(stat="count", aes(label=..count..), vjust=0.5, hjust = -0.01, size = 2.2) +
+  coord_flip() 
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
