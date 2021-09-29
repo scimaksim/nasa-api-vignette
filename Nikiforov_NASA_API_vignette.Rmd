@@ -51,16 +51,6 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   
   t_star <- t_eff-5780
   
-  if(planetMass){
-    
-  } else if (planetMass){
-    
-  } else if (planetMass){
-    
-  } else{
-    
-  }
-  
   for (i in 1:length(a)){
     s_eff[i] <- s_eff_sun[i] + a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
     distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
@@ -82,8 +72,11 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   optimisticInnerFlux <- s_eff[1]
   optimisticOuterFlux <- s_eff[4]
   
+  solarFlux <- 
+  
   return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
-              optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
+              optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux,
+              solarFlux = solarFlux))
   
 }
 
@@ -157,7 +150,7 @@ for(i in 1:length(exoData$pl_bmasse)){
   }
 }
 
-exoData
+exoData %>% select(pl_name, pl_bmasse, pl_rade, pl_eqt, pl_orbsmax, innerHZ, outerHZ, innerFlux, outerFlux) %>% filter(grepl("Tee", pl_name))
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -168,16 +161,17 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
                                minTemp = 273, maxTemp = 340){
   
   habitablePlanets <- data %>% select(pl_name, pl_eqt, spectralClass, pl_bmasse, pl_rade, 
-                                      pl_orbeccen, innerHZ, outerHZ, innerFlux, outerFlux) %>% 
-    filter(spectralClass %in% c("F", "G", "K", "M") & (pl_bmasse >= minEarthMass) &
+                                      pl_orbeccen, pl_orbsmax, innerHZ, outerHZ, innerFlux, outerFlux) %>% 
+    filter(spectralClass %in% c("F", "G", "K", "M") & (pl_orbsmax >= innerHZ) & (pl_orbsmax <= outerHZ) & (pl_bmasse >= minEarthMass) &
              (pl_bmasse <= maxEarthMass) & (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius) &
              (innerFlux <= maxInnerFlux) & (outerFlux >= maxOuterFlux) &
-             (pl_eqt <= 340) & (pl_eqt >= 273))
+             (pl_eqt <= maxTemp | (is.na(pl_eqt))) & (pl_eqt >= minTemp | (is.na(pl_eqt == NA))))
   
   return(habitablePlanets)
 }
 
-listHabitablePlanets <- habitableExoFinder(exoData)
+listHabitablePlanets <- habitableExoFinder(exoData, minTemp = 181, maxTemp = 279,
+                                           maxEarthMass = 10, maxEarthRadius = 2.5)
 listHabitablePlanets
 
 ```
@@ -243,9 +237,10 @@ annualDiscoveries + geom_bar(aes(fill = discoverymethod), alpha = 0.8, position 
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryScatter <- ggplot(discoveryYrMthd, aes(x = log(pl_bmassj), y = pl_radj))
-exoDiscoveryScatter + geom_point(aes(col = pl_eqt, size = pl_bmassj), alpha = 0.6) +
-  geom_smooth()
+exoData <- annualExoDiscoveries() 
+
+massRadScatter <- ggplot(exoData, aes(x = log(pl_bmassj), y = pl_radj))
+massRadScatter + geom_point(aes(col = pl_eqt, size = pl_bmassj), alpha = 0.6) 
 ```
 
 
