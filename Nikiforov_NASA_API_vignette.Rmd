@@ -12,7 +12,15 @@ library(DT)
 library(latex2exp)
 ```
 
-## GitHub Documents
+## Package requirements
+
+To re-create this vignette, users are required to install 
+
+* **[tidyverse](https://www.tidyverse.org/)** - encompasses packages such as `dplyr` for subsetting data and `ggplot2` for creating layered graphics.  
+* **[httr](https://httr.r-lib.org/)** - supplies the `GET()` function to programmatically retrieve content from NASA Exoplanet Archive's [TAP service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples). 
+* **[jsonlite](https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html)** - supplies the `fromJSON()` function to simplify JSON content into an atomic vector.
+* **[DT](https://rstudio.github.io/DT/)** - 
+* **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/).   
 
 This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
 
@@ -94,7 +102,7 @@ sampleCalc
 
 annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), controversial = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -251,12 +259,36 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_bmasse), alpha = 0.6, p
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-tempMassData <- annualExoDiscoveries() 
+planetClusters <- annualExoDiscoveries()
+planetClusters <- planetClusters %>% select(pl_bmasse, pl_bmassj) %>% filter()
+```
 
-tempMassHisto <- ggplot(tempMassData, aes(x = log(pl_bmasse,10)))
-tempMassHisto + geom_histogram() +
-  labs(x = TeX(r'($log(M\oplus)$)'), y = "Count",
-       title = "The logarithmic distribution of mass in known exoplanets") 
+
+```{r , echo=TRUE, eval=TRUE}
+metallicityData <- annualExoDiscoveries() 
+metallicityData <- metallicityData %>% select(st_metratio, st_met, pl_bmassj, pl_bmasse, pl_orbper) %>% 
+  filter(st_metratio == "[Fe/H]" & !(is.na(pl_bmassj)) & (pl_bmassj >= 0.6))
+
+metallicityData %>% mutate(category = NA)
+
+for(i in 1:length(metallicityData$pl_bmassj)){
+  
+  if(metallicityData$pl_bmassj[i] <= 0.9 & metallicityData$pl_bmassj[i] >= 0.6){
+    metallicityData$category[i] <- "Sub-Jupiter"
+  } else if(metallicityData$pl_bmassj[i] <= 4) {
+    metallicityData$category[i] <- "Jupiter-mass"
+  } else {
+    metallicityData$category[i] <- "Super-massive"
+  }
+}
+  
+metallicityData
+  
+
+metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
+metallicityHisto + geom_histogram(aes(fill = metallicityData$category)) +
+  labs(x = "Stellar Effective Temperature [K]", y = "Count",
+       title = "The distribution of planets as a function of stellar effective temperature") 
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
