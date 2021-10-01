@@ -206,14 +206,10 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 # Planetary Habitability Laboratory
 listHabitablePlanets <- habitableExoFinder(exoData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
-datatable(listHabitablePlanets)
+listHabitablePlanets
 
 ```
 
-```{r , echo=TRUE, eval=TRUE}
-habitablePlanetSpecs <- ggplot(listHabitablePlanets, aes(x = pl_bmasse, y = pl_rade))
-habitablePlanetSpecs + geom_point(aes(color = pl_eqt), alpha = 0.6, position = "jitter")
-```
 The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
 
 1. The planet orbits an F, G, K, or M star.
@@ -231,7 +227,7 @@ exoDiscoveryHisto + geom_histogram() +
 
 
 ```{r , echo=TRUE, eval=TRUE}
-# New vector with termporary data
+# New vector with temporary data
 tempMassData <- annualExoDiscoveries() 
 
 # Scatter plot of masses/radii for discovered exoplanets
@@ -282,12 +278,5 @@ exoDiscoveryScatter <- ggplot(discoveryYrMthd, aes(x = log(pl_orbper), y = pl_or
 exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha = 0.6, position = "jitter")
 ```
 
-
-
-Then look at the structure of the object!
-
-```{r , echo=TRUE, eval=TRUE}
-
-```
 
 
