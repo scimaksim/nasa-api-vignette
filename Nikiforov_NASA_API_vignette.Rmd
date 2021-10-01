@@ -1,5 +1,6 @@
 ---
 title: "NASA API Vignette"
+always_allow_html: true
 output: github_document
 ---
 
@@ -79,9 +80,6 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
               optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
   
 }
-
-sampleCalc <- calculateHZ(5780, 102.3, 9)
-sampleCalc
 ```
 
 
