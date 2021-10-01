@@ -107,16 +107,39 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 
 ## Exploratory Data Analysis
 
-As of `ras.integer(format(Sys.Date(), "%Y")`, NASA Exoplanet Archive's Planetary Systems Composite Parameters (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. 
-
 ```{r , echo=TRUE, eval=TRUE}
 exoplanetCount <- annualExoDiscoveries()
 
 # Display in a searchable table using DT library's datatable function
 #datatable(discoveryYrMthd)
-exoplanetCount
+datatable(exoplanetCount)
+```
+As of `r date()`, the NASA Exoplanet Archive's Planetary Systems Composite Parameters (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
 
-length(exoplanetCount$pl_name)
+```{r , echo=TRUE, eval=TRUE}
+# Retrieve latest exoplanet data
+exoData <- annualExoDiscoveries() 
+
+# Create horizontal bar plot with annual number of discoveries
+annualDiscoveries <- ggplot(exoData, aes(x = as.character(disc_year)))
+annualDiscoveries + geom_bar(aes(fill = discoverymethod), 
+                             alpha = 0.8, position = "stack") +
+  labs(x = "Discovery year", y = "Count",
+       title = "Exoplanet discoveries over time", 
+       subtitle = "Grouped by discovery method") +
+  scale_fill_discrete(name = "Discovery method") +
+  theme(axis.text.x = element_text(angle = 45)) + 
+  geom_text(stat="count", aes(label=..count..), 
+            vjust=0.5, hjust = -0.01, size = 2.2) +
+  coord_flip() 
+```
+
+Of the known `r length(exoplanetCount$pl_name)` exoplanets, `r (discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100`% were observed transiting their host star. Another `r discoveriesByMethod[9]` exoplanets were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum.  
+
+```{r , echo=TRUE, eval=TRUE}
+#
+discoveriesByMethod <- table(exoData$discoverymethod)
+discoveriesByMethod
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -205,19 +228,7 @@ exoDiscoveryHisto + geom_histogram() +
 ```
 
 
-```{r , echo=TRUE, eval=TRUE}
 
-exoData <- annualExoDiscoveries() 
-
-annualDiscoveries <- ggplot(exoData, aes(x = as.character(disc_year)))
-annualDiscoveries + geom_bar(aes(fill = discoverymethod), alpha = 0.8, position = "stack") +
-  labs(x = "Discovery year", y = "Count",
-       title = "Exoplanet discoveries over time", subtitle = "Grouped by discovery method") +
-  scale_fill_discrete(name = "Discovery method") +
-  theme(axis.text.x = element_text(angle = 45)) + 
-  geom_text(stat="count", aes(label=..count..), vjust=0.5, hjust = -0.01, size = 2.2) +
-  coord_flip() 
-```
 
 ```{r , echo=TRUE, eval=TRUE}
 # New vector with termporary data
