@@ -19,16 +19,10 @@ To re-create this vignette, users are required to install
 * **[tidyverse](https://www.tidyverse.org/)** - encompasses packages such as `dplyr` for subsetting data and `ggplot2` for creating layered graphics.  
 * **[httr](https://httr.r-lib.org/)** - supplies the `GET()` function to programmatically retrieve content from NASA Exoplanet Archive's [TAP service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples). 
 * **[jsonlite](https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html)** - supplies the `fromJSON()` function to simplify JSON content into an atomic vector.
-* **[DT](https://rstudio.github.io/DT/)** - 
+* **[DT](https://rstudio.github.io/DT/)** - suplies the `datatables()` function with "filtering, pagination, sorting, and many other features" in the tables". 
 * **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/).   
 
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
-
-## Including Code
-
-Discovery year: disc_year
-Discovery method: discoverymethod
-Number:
+## Custom functions
 
 ```{r , echo=TRUE, eval=TRUE}
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
@@ -81,11 +75,8 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   optimisticInnerFlux <- s_eff[1]
   optimisticOuterFlux <- s_eff[4]
   
-  solarFlux <- 
-  
   return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
-              optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux,
-              solarFlux = solarFlux))
+              optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
   
 }
 
@@ -141,7 +132,7 @@ for(i in 1:length(exoData$pl_bmasse)){
   if(!is.na(exoData$pl_bmasse[i]) & exoData$pl_bmasse[i] <= 10 & exoData$pl_bmasse[i] >= 0.1) {
     
 
-      hzVars <- calcHZ(exoData$st_teff[i], 
+      hzVars <- calculateHZ(exoData$st_teff[i], 
              exoData$luminosityRatio[i],
              exoData$pl_bmasse[i])
 
@@ -213,14 +204,6 @@ The Planetary Habitability Laboratory outlines its [general habitability criteri
 1. The planet orbits an F, G, K, or M star.
 2. The planet orbits within the optimistic (aka empirical) habitable zone defined by Kopparapu et al. (2014) and corrected for eccentric orbits by Méndez & Rivera-Valentín (2017).
 3. The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses.
-
-
-```{r , echo=TRUE, eval=TRUE}
-stellarTypeHistogram <- ggplot(spectralType, aes(x = mainType))
-stellarTypeHistogram + geom_bar() +
-  labs(x = "Stellar type", y = "Count",
-       title = "Planetary discoveries as a function of main stellar type") 
-```
 
 ```{r , echo=TRUE, eval=TRUE}
 exoDiscoveryHisto <- ggplot(discoveryYrMthd, aes(x = st_teff))
@@ -301,7 +284,7 @@ exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha
 Then look at the structure of the object!
 
 ```{r , echo=TRUE, eval=TRUE}
-str(astroContent)
+
 ```
 
 
