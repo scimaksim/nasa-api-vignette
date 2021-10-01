@@ -14,7 +14,7 @@ library(latex2exp)
 
 ## Package requirements
 
-To re-create this vignette, users are required to install 
+To re-create this vignette in R, users are required to install 
 
 * **[tidyverse](https://www.tidyverse.org/)** - encompasses packages such as `dplyr` for subsetting data and `ggplot2` for creating layered graphics.  
 * **[httr](https://httr.r-lib.org/)** - supplies the `GET()` function to programmatically retrieve content from NASA Exoplanet Archive's [TAP service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples). 
@@ -103,15 +103,21 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
   # Return formatted data frame
   return(apiContent)
 }
-
-discoveryYrMthd <- annualExoDiscoveries()
-
-# Display in a searchable table using DT library's datatable function
-#datatable(discoveryYrMthd)
-discoveryYrMthd
 ```
 
 ## Exploratory Data Analysis
+
+As of `ras.integer(format(Sys.Date(), "%Y")`, NASA Exoplanet Archive's Planetary Systems Composite Parameters (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. 
+
+```{r , echo=TRUE, eval=TRUE}
+exoplanetCount <- annualExoDiscoveries()
+
+# Display in a searchable table using DT library's datatable function
+#datatable(discoveryYrMthd)
+exoplanetCount
+
+length(exoplanetCount$pl_name)
+```
 
 ```{r , echo=TRUE, eval=TRUE}
 
@@ -177,7 +183,7 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 # Planetary Habitability Laboratory
 listHabitablePlanets <- habitableExoFinder(exoData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
-listHabitablePlanets
+datatable(listHabitablePlanets)
 
 ```
 
@@ -185,20 +191,6 @@ listHabitablePlanets
 habitablePlanetSpecs <- ggplot(listHabitablePlanets, aes(x = pl_bmasse, y = pl_rade))
 habitablePlanetSpecs + geom_point(aes(color = pl_eqt), alpha = 0.6, position = "jitter")
 ```
-
-```{r , echo=TRUE, eval=TRUE}
-
-a_in <- 2.7619e-5
-b_in <- 3.8095e-9
-
-a_out <- 1.3786e-4
-b_out <- 1.4286e-9
-
-l_in <- c(0.72, 0.895, 0.72, 0.485)
-l_out <- c(1.77, 1.67, 1.95, 2.4)
-```
-
-
 The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
 
 1. The planet orbits an F, G, K, or M star.
