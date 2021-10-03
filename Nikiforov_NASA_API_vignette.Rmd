@@ -2,6 +2,7 @@
 title: "NASA API Vignette"
 always_allow_html: true
 output: github_document
+bibliography: references.bib 
 ---
 
 ```{r setup, include=FALSE}
@@ -63,12 +64,6 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
     optimisticOuterDist <- distanceFromStar[4]
   
   }
-  
-  description = c("Optimistic, 1M Inner HZ - Recent Venus", "Conservative, 1M Inner HZ - Runaway Greenhouse",
-               "Conservative, 1M Outer HZ - Maximum Greenhouse", "Optimistic, 1M Outer HZ - Early Mars",
-               "Conservative, 5M Inner HZ - Runaway Greenhouse", "Conservative, 0.1M Inner HZ - Runaway Greenhouse")
-  
-  hzDescriptions <- data.frame(description, s_eff, distanceFromStar)
 
   optimisticInnerDist <- distanceFromStar[1]
   optimisticOuterDist <- distanceFromStar[4]
@@ -81,7 +76,6 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   
 }
 ```
-
 
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -103,81 +97,59 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 }
 ```
 
-## Exploratory Data Analysis
-
-```{r , echo=TRUE, eval=TRUE}
-exoplanetCount <- annualExoDiscoveries()
-
-# Display in a searchable table using DT library's datatable function
-#datatable(discoveryYrMthd)
-datatable(exoplanetCount)
-```
-As of `r date()`, the NASA Exoplanet Archive's Planetary Systems Composite Parameters (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
-
-```{r , echo=TRUE, eval=TRUE}
-# Retrieve latest exoplanet data
-exoData <- annualExoDiscoveries() 
-
-# Create horizontal bar plot with annual number of discoveries
-annualDiscoveries <- ggplot(exoData, aes(x = as.character(disc_year)))
-annualDiscoveries + geom_bar(aes(fill = discoverymethod), 
-                             alpha = 0.8, position = "stack") +
-  labs(x = "Discovery year", y = "Count",
-       title = "Exoplanet discoveries over time", 
-       subtitle = "Grouped by discovery method") +
-  scale_fill_discrete(name = "Discovery method") +
-  theme(axis.text.x = element_text(angle = 45)) + 
-  geom_text(stat="count", aes(label=..count..), 
-            vjust=0.5, hjust = -0.01, size = 2.2) +
-  coord_flip() 
-```
-
-Of the known `r length(exoplanetCount$pl_name)` exoplanets, `r (discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100`% were observed transiting their host star. Another `r discoveriesByMethod[9]` exoplanets were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum.  
-
-```{r , echo=TRUE, eval=TRUE}
-#
-discoveriesByMethod <- table(exoData$discoverymethod)
-discoveriesByMethod
-```
-
 ```{r , echo=TRUE, eval=TRUE}
 
-exoData <- annualExoDiscoveries()
+exoDataTest <- annualExoDiscoveries()
+exoDataTest
 
-exoData %>% mutate(innerHZ = NA, outerHZ = NA, innerFlux = NA, outerFlux = NA,
-                   spectralClass = NA)
-
-for(i in 1:length(exoData$pl_bmasse)){
+hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse", 
+                             starSpecTypeCol = "st_spectype", 
+                             effectiveTempCol = "st_teff",
+                             luminosityRatioCol = "luminosityRatio"){
   
-  if(!is.na(exoData$st_spectype[i])){
-    exoData$spectralClass[i] <- substr(exoData$st_spectype[i], 1, 1)
-  } else {
-    exoData$spectralClass[i] <- NA
-  }
+  data %>% mutate(innerHZ = NA, outerHZ = NA, innerFlux = NA, outerFlux = NA,
+                  spectralClass = NA)
   
+  earthMassCol <- data[ , earthMassCol]
+  starSpecTypeCol <- data[ , starSpecTypeCol]
+  effectiveTempCol <- data[ , effectiveTempCol]
+  luminosityRatioCol <- data[ , luminosityRatioCol]
   
-  if(!is.na(exoData$pl_bmasse[i]) & exoData$pl_bmasse[i] <= 10 & exoData$pl_bmasse[i] >= 0.1) {
+  for(i in 1:length(earthMassCol)){
+    if(!is.na(starSpecTypeCol[i])){
+      data$spectralClass[i] <- substr(starSpecTypeCol[i], 1, 1)
+    } else {
+      data$spectralClass[i] <- NA
+    }
     
-
-      hzVars <- calculateHZ(exoData$st_teff[i], 
-             exoData$luminosityRatio[i],
-             exoData$pl_bmasse[i])
-
-      exoData$innerHZ[i] <- hzVars[[1]]
-      exoData$outerHZ[i] <- hzVars[[2]]
+    
+    if(!is.na(earthMassCol[i]) & earthMassCol[i] <= 10 & 
+       earthMassCol[i] >= 0.1){
       
-      exoData$innerFlux[i] <- hzVars[[3]]
-      exoData$outerFlux[i] <- hzVars[[4]]
-
-} else {
-  exoData$innerHZ[i] <- NA
-  exoData$outerHZ[i] <- NA
-  exoData$innerFlux[i] <- NA
-  exoData$outerFlux[i] <- NA
+      
+      hzVars <- calculateHZ(effectiveTempCol[i], 
+                            luminosityRatioCol[i],
+                            earthMassCol[i])
+      
+      data$innerHZ[i] <- hzVars[[1]]
+      data$outerHZ[i] <- hzVars[[2]]
+      
+      data$innerFlux[i] <- hzVars[[3]]
+      data$outerFlux[i] <- hzVars[[4]]
+      
+    } else {
+      data$innerHZ[i] <- NA
+      data$outerHZ[i] <- NA
+      data$innerFlux[i] <- NA
+      data$outerFlux[i] <- NA
+    }
   }
+  
+  return(data)
 }
 
-exoData %>% select(pl_name, pl_bmasse, pl_rade, pl_eqt, pl_orbsmax, innerHZ, outerHZ, innerFlux, outerFlux) %>% filter(grepl("Tee", pl_name))
+hzFluxCalculator(exoDataTest)
+
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -202,11 +174,111 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 
 # Run function using "optimistic" parameters from
 # Planetary Habitability Laboratory
-listHabitablePlanets <- habitableExoFinder(exoData, minTemp = 181, maxTemp = 279,
+
+testData <- hzFluxCalculator(exoDataTest)
+
+listHabitablePlanets <- habitableExoFinder(testData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
 listHabitablePlanets
 
 ```
+
+
+## Exploratory Data Analysis
+
+### Basic summaries
+
+```{r , echo=TRUE, eval=TRUE}
+# Retrieve latest exoplanet data
+exoplanetCount <- annualExoDiscoveries()
+
+# Display in a searchable table using DT library's datatable function
+datatable(exoplanetCount)
+```
+As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
+
+```{r , echo=TRUE, eval=TRUE}
+# Retrieve latest exoplanet data
+exoData <- annualExoDiscoveries() 
+
+# Create horizontal bar plot with annual number of discoveries
+annualDiscoveries <- ggplot(exoData, aes(x = as.character(disc_year)))
+annualDiscoveries + geom_bar(aes(fill = discoverymethod), 
+                             alpha = 0.8, position = "stack") +
+  labs(x = "Discovery year", y = "Count",
+       title = "Exoplanet discoveries over time", 
+       subtitle = "Grouped by discovery method") +
+  scale_fill_discrete(name = "Discovery method") +
+  theme(axis.text.x = element_text(angle = 45)) + 
+  geom_text(stat="count", aes(label=..count..), 
+            vjust=0.5, hjust = -0.01, size = 2.2) +
+  coord_flip() 
+```
+Of the known `r length(exoplanetCount$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed transiting their host star. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. The contingency table below summarizes the cumulative number of observations for the remaining discovery methods.  
+
+```{r , echo=TRUE, eval=TRUE}
+# Contingency table, total number of exoplanets found with each discovery method
+discoveriesByMethod <- table(exoData$discoverymethod)
+discoveriesByMethod
+```
+```{r , echo=TRUE, eval=TRUE}
+summary(exoData$pl_bmasse)
+summary(exoData$pl_rade)
+summary(exoData$pl_orbeccen)
+```
+
+
+
+
+
+
+
+
+
+```{r , echo=TRUE, eval=TRUE}
+# Masses, radii, eccentricities, and orbit semi-major axes
+densityOrbtialProp <- annualExoDiscoveries() 
+densityOrbtialProp <- densityOrbtialProp %>% select(pl_orbeccen, pl_orbsmax) %>% 
+  filter(!is.na(pl_orbeccen) & !is.na(pl_orbsmax))
+
+
+orbEccenCDF <- ggplot(densityOrbtialProp, aes(x = pl_orbeccen))
+orbEccenCDF + stat_ecdf(geom = "step")
+
+
+# Scatter plot of masses/radii for discovered exoplanets
+# Use LaTeX to denote the standard astronomical symbol for the Earth
+orbsEccenScatter <- ggplot(densityOrbtialProp, aes(x = pl_orbsmax, y = pl_orbeccen, scale_x_log10()))
+orbsEccenScatter + geom_point(alpha = 0.6, position = "jitter") +
+  scale_x_log10() +
+  labs(x = TeX(r'(Mass $(log(M\oplus))]$))'), y = TeX(r'(Radius $(R\oplus)$)'),
+       title = "Comparison of radius and logarithmic mass amongst known exoplanets")
+```
+
+
+```{r , echo=TRUE, eval=TRUE}
+metallicityData <- annualExoDiscoveries() 
+metallicityData <- metallicityData %>% select(st_metratio, st_met, discoverymethod, pl_bmassj, pl_bmasse, pl_orbper) %>% 
+  filter(st_metratio == "[Fe/H]" & 
+           (discoverymethod %in% c("Transit", "Radial Velocity", "Microlensing")))
+
+metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
+metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), adjust = 0.5, alpha = 0.5) +
+  labs(x = "Stellar metallicity [Fe/H]", y = "Count",
+       title = "The distribution of exo planets as a function of stellar metallicity",
+       subtitle = "Grouped by discovery method") 
+```
+
+
+### Habitable planet summary
+
+We can calculate the maxima and minima for habitable zones and flux using formulae provided by Kopparapu et al. [@Kopparapu_2014]. 
+
+```{r , echo=TRUE, eval=TRUE}
+
+```
+
+
 
 The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
 
