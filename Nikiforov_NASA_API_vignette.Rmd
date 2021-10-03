@@ -5,6 +5,7 @@ output:
   github_document:
     toc: true
     toc_depth: 3
+    df_print: tibble
 # Bibliography and citation tips provided by 
 # https://bookdown.org/yihui/rmarkdown-cookbook/bibliography.html
 bibliography: references.bib 
@@ -62,7 +63,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, end
 
 ### calculateHZ
 
-This function calculates exoplanetary habitable zones and their associated stellar flux boundaries for a star of effective temperature `tempEff` and a stellar luminosity `luminosityRatio`. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ is defined as $S_{eff} = S_{eff \odot} + aT_{\star} + bT_{\star}^2+ cT_{\star}^3 + dT_{\star}^4$ and the corresponding habiatability zone distances, $d$, are defined as $d = (\frac{L/L \odot}{S_{eff}})^{0.5}$ AU [@Kopparapu_2014]. The required parameters for this function are:
+This function calculates exoplanetary habitable zones and their associated stellar flux boundaries for a star of effective temperature `tempEff` and a stellar luminosity `luminosityRatio`. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ is defined as $S_{eff} = S_{eff \odot} + aT_{*} + bT_{*}^2+ cT_{*}^3 + dT_{*}^4$ and the corresponding habiatability zone distances, $d$, are defined as $d = (\frac{L/L \odot}{S_{eff}})^{0.5}$ AU [@Kopparapu_2014]. The required parameters for this function are:
 
 * `tempEff` - the effective temperature of a star. $T_{eff}$ is defined as the difference between `tempEff` ($T_{eff}$) and 5780 K, $T_{\star} = T_{eff} - 5780$. 
 * `luminosityRatio` - stellar luminosity, defined as the ratio $\frac{L}{L \odot}$. These values are calculated in the `annualExoDiscoveries` function by finding the inverse logarithm of `st_lum` (the stellar luminosity in the **PSCompPars** table, provided in units of $log(Solar)$). The values in this vector are used to calculate the habiatability zone distances, $d$.
@@ -100,7 +101,9 @@ calculateHZ <- function(tempEff, luminosityRatio){
   t_star <- tempEff-5780
   
   for (i in 1:length(a)){
-    s_eff[i] <- s_eff_sun[i] + a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
+    s_eff[i] <- s_eff_sun[i] + 
+      a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
+    
     distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
     
     optimisticInnerDist <- distanceFromStar[1]
@@ -114,13 +117,11 @@ calculateHZ <- function(tempEff, luminosityRatio){
   optimisticInnerFlux <- s_eff[1]
   optimisticOuterFlux <- s_eff[4]
   
-  return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
-              optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
+  return(list(optimisticInnerDist = optimisticInnerDist, 
+              optimisticOuterDist = optimisticOuterDist, 
+              optimisticInnerFlux = optimisticInnerFlux, 
+              optimisticOuterFlux = optimisticOuterFlux))
 }
-
-testVals <- annualExoDiscoveries()
-funcTest <- calculateHZ(5780, 1.5)
-str(funcTest)
 ```
 
 ### hzFluxCalculator()
@@ -130,7 +131,7 @@ This custom function calculates the minima and the maxima for a planet's habitab
 * `earthMassCol = "pl_bmasse"` - a vector with planetary masses in units of Earth mass ($M \oplus$).
 * `starSpecTypeCol = "st_spectype"` - a vector listing the spectral type of host stars.
 * `effectiveTempCol = "st_teff"` - a vector listing the effective temperatures of host stars.
-* `luminosityRatioCol = "luminosityRatio"` - a vector with the stellar luminosity ratios, $\frac{L}{L \odot}$. 
+* `luminosityRatioCol = "luminosityRatio"` - a vector with the stellar luminosity ratios, $L/L \odot}$. 
 
 These default column names are based on the variables in the [Planetary Systems Composite Parameters (PSCompPars)](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) table. `luminosityRatioCol` is calculated and appended to each data frame that stems from the `annualExoDiscoveries()` function. 
 
@@ -142,8 +143,8 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
                              effectiveTempCol = "st_teff",
                              luminosityRatioCol = "luminosityRatio"){
   
-  data %>% mutate(innerHZ = NA, outerHZ = NA, innerFlux = NA, outerFlux = NA,
-                  spectralClass = NA)
+  data %>% mutate(innerHZ = NA, outerHZ = NA, innerFlux = NA, 
+                  outerFlux = NA, spectralClass = NA)
   
   earthMassCol <- data[ , earthMassCol]
   starSpecTypeCol <- data[ , starSpecTypeCol]
@@ -185,17 +186,22 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
 
 ### habitableExoFinder()
 
-This function produces a data frame of potentially habitable exoplanets based on a set of parameters. The default parameters are:
+This function produces a data frame of potentially habitable exoplanets from a set of general habitability criteria, many of which are inspired by the University of Puerto Rico's [Planetary Habitability Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods). These include the conditions that 
 
-* `minEarthMass = 0.1` - 
-* `maxEarthMass = 5` - 
-* `minEarthRadius = 0.5` - 
-* `maxEarthRadius = 1.5` - 
-* `maxInnerFlux = 1.5` - 
-* `maxOuterFlux = 0.20` - 
-* `minTemp = 273` - 
-* `maxTemp = 340` - 
+1. The planet orbits an F, G, K, or M star (this is accommodated using the function `filter(spectralClass %in% c("F", "G", "K", "M")`).
+2. The planet orbits within the optimistic habitable zone defined by @Kopparapu_2014. Individual habitable zone values are calculated using the `calculateHZ()` function and extended to larger data sets via the `hzFluxCalculator()` function.
+3. The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses. 
 
+These parameters can be tuned using arguments from published research. For simplicity, the default values are:
+
+* `minEarthMass = 0.1` 
+* `maxEarthMass = 5` 
+* `minEarthRadius = 0.5` 
+* `maxEarthRadius = 1.5` 
+* `maxInnerFlux = 1.5` 
+* `maxOuterFlux = 0.20`
+* `minTemp = 273` - units of Kelvin
+* `maxTemp = 340` - units of Kelvin
 
 ```{r , echo=TRUE, eval=TRUE}
 # Create function to identify potentially habitable exoplanets. 
@@ -207,37 +213,46 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
                                minTemp = 273, maxTemp = 340){
   
   # Subset data using provided parameters
-  habitablePlanets <- data %>% select(pl_name, pl_eqt, spectralClass, pl_bmasse, pl_rade, 
-                                      pl_orbeccen, pl_orbsmax, innerHZ, outerHZ, innerFlux, outerFlux) %>% 
-    filter(spectralClass %in% c("F", "G", "K", "M") & (pl_orbsmax >= innerHZ) & (pl_orbsmax <= outerHZ) & (pl_bmasse >= minEarthMass) &
-             (pl_bmasse <= maxEarthMass) & (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius) &
+  habitablePlanets <- data %>% select(pl_name, pl_eqt, spectralClass, 
+                                      pl_bmasse, pl_rade, pl_orbeccen, 
+                                      pl_orbsmax, innerHZ, outerHZ, 
+                                      innerFlux, outerFlux) %>% 
+    filter(spectralClass %in% c("F", "G", "K", "M") & 
+             (pl_orbsmax >= innerHZ) & (pl_orbsmax <= outerHZ) & 
+             (pl_bmasse >= minEarthMass) &
+             (pl_bmasse <= maxEarthMass) & 
+             (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius) &
              (innerFlux <= maxInnerFlux) & (outerFlux >= maxOuterFlux) &
-             (pl_eqt <= maxTemp | (is.na(pl_eqt))) & (pl_eqt >= minTemp | (is.na(pl_eqt == NA))))
+             (pl_eqt <= maxTemp | (is.na(pl_eqt))) & 
+             (pl_eqt >= minTemp | (is.na(pl_eqt == NA))))
   
   return(habitablePlanets)
 }
 ```
 
-
 ## Exploratory Data Analysis
 
-```{r , echo=TRUE, eval=TRUE}
-# Retrieve latest exoplanet data
-exoplanetCount <- annualExoDiscoveries()
+### Basic summaries
 
-# Display in a searchable table using DT library's datatable function
-head(exoplanetCount)
+The `annualExoDiscoveries()` function retrieves the latest exoplanet data from NASA's Exoplanet Archive.  
+
+```{r , echo=TRUE, eval=TRUE, rows.print=10}
+# Retrieve latest exoplanet data
+exoplanetData <- annualExoDiscoveries()
+
+# Print a subset of observations
+exoplanetData
 ```
 
-As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
+As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
 
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve latest exoplanet data
-exoData <- annualExoDiscoveries() 
+annualDiscoveries <- exoplanetData 
 
 # Create horizontal bar plot with annual number of discoveries
-annualDiscoveries <- ggplot(exoData, aes(x = as.character(disc_year)))
-annualDiscoveries + geom_bar(aes(fill = discoverymethod), 
+annualDiscoveryBar <- ggplot(annualDiscoveries, aes(x = as.character(disc_year)))
+annualDiscoveryBar + geom_bar(aes(fill = discoverymethod), 
                              alpha = 0.8, position = "stack") +
   labs(x = "Discovery year", y = "Count",
        title = "Exoplanet discoveries over time", 
@@ -246,27 +261,49 @@ annualDiscoveries + geom_bar(aes(fill = discoverymethod),
   theme(axis.text.x = element_text(angle = 45)) + 
   geom_text(stat="count", aes(label=..count..), 
             vjust=0.5, hjust = -0.01, size = 2.2) +
+  theme(legend.position = c(0.67, 0.33)) +
+  guides(fill=guide_legend(ncol=2)) +
   coord_flip() 
 ```
 
+The contingency table below summarizes the cumulative number of observations for each discovery method.
+
 ```{r , echo=TRUE, eval=TRUE}
-# Contingency table, total number of exoplanets found with each discovery method
-discoveriesByMethod <- table(exoData$discoverymethod)
-discoveriesByMethod
+# Contingency table 
+# Total number of exoplanets found with each discovery method
+discoveriesByMethod <- table(annualDiscoveries$discoverymethod)
+
+# Display as data frame for aesthetics
+knitr::kable(discoveriesByMethod, 
+             caption = "The number of exoplanet discoveries by method.",
+             col.names = c("Discovery method", "Frequency"))
 ```
 
-Of the known `r length(exoplanetCount$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed transiting their host star. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. The contingency table below summarizes the cumulative number of observations for the remaining discovery methods.  
+Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed transiting their host star. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum.   
+
+```{r , echo=TRUE, eval=TRUE}
+ggplot(annualDiscoveries, aes(x = discoverymethod)) + 
+  geom_bar(aes(y = (..count..)/sum(..count..)))
+```
 
 
 ```{r , echo=TRUE, eval=TRUE}
-summary(exoData$pl_bmasse)
-summary(exoData$pl_rade)
-summary(exoData$pl_orbeccen)
+summary(annualDiscoveries$pl_bmasse)
+summary(annualDiscoveries$pl_rade)
+summary(annualDiscoveries$pl_orbeccen)
+```
+
+
+
+```{r , echo=TRUE, eval=TRUE}
+summary(annualDiscoveries$pl_bmasse)
+summary(annualDiscoveries$pl_rade)
+summary(annualDiscoveries$pl_orbeccen)
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
 # Masses, radii, eccentricities, and orbit semi-major axes
-densityOrbtialProp <- annualExoDiscoveries() 
+densityOrbtialProp <- exoplanetData
 densityOrbtialProp <- densityOrbtialProp %>% select(pl_orbeccen, pl_orbsmax) %>% 
   filter(!is.na(pl_orbeccen) & !is.na(pl_orbsmax))
 
@@ -284,9 +321,10 @@ orbsEccenScatter + geom_point(alpha = 0.6, position = "jitter") +
        title = "Comparison of radius and logarithmic mass amongst known exoplanets")
 ```
 
+### Habitability summaries
 
 ```{r , echo=TRUE, eval=TRUE}
-metallicityData <- annualExoDiscoveries() 
+metallicityData <- exoplanetData
 metallicityData <- metallicityData %>% select(st_metratio, st_met, discoverymethod, pl_bmassj, pl_bmasse, pl_orbper) %>% 
   filter(st_metratio == "[Fe/H]" & 
            (discoverymethod %in% c("Transit", "Radial Velocity", "Microlensing")))
@@ -298,17 +336,11 @@ metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), a
        subtitle = "Grouped by discovery method") 
 ```
 
-The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
-
-1. The planet orbits an F, G, K, or M star.
-2. The planet orbits within the optimistic (aka empirical) habitable zone defined by Kopparapu et al. (2014) and corrected for eccentric orbits by Méndez & Rivera-Valentín (2017).
-3. The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses.
-
 We can calculate the maxima and minima for habitable zones and flux using formulae provided by Kopparapu et al. [@Kopparapu_2014]. 
 
 ```{r , echo=TRUE, eval=TRUE}
 # Grab up-to-date data from API
-planetData <- annualExoDiscoveries()
+planetData <- exoplanetData
 
 # Calculate maxima/minima for habitabilize zone and flux for each exoplanet
 hzFluxData <- hzFluxCalculator(planetData)
@@ -323,7 +355,7 @@ head(listHabitablePlanets)
 
 ```{r , echo=TRUE, eval=TRUE}
 # New vector with temporary data
-tempMassData <- annualExoDiscoveries() 
+tempMassData <- exoplanetData 
 
 # Scatter plot of masses/radii for discovered exoplanets
 # Use LaTeX to denote the standard astronomical symbol for the Earth
@@ -336,13 +368,13 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_bmasse), alpha = 0.6, p
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-planetClusters <- annualExoDiscoveries()
+planetClusters <- exoplanetData
 planetClusters <- planetClusters %>% select(pl_bmasse, pl_bmassj) %>% filter()
 ```
 
 
 ```{r , echo=TRUE, eval=TRUE}
-metallicityData <- annualExoDiscoveries() 
+metallicityData <- exoplanetData 
 metallicityData <- metallicityData %>% select(st_metratio, st_met, pl_bmassj, pl_bmasse, pl_orbper) %>% 
   filter(st_metratio == "[Fe/H]" & !(is.na(pl_bmassj)) & (pl_bmassj >= 0.6))
 
@@ -366,7 +398,7 @@ metallicityHisto + geom_histogram(aes(fill = category)) +
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-orbPerEccen <- annualExoDiscoveries() 
+orbPerEccen <- exoplanetData 
 
 exoDiscoveryScatter <- ggplot(orbPerEccen, aes(x = log(pl_orbper), y = pl_orbeccen))
 exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha = 0.6, position = "jitter")
