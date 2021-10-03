@@ -5,7 +5,10 @@ output:
   github_document:
     toc: true
     toc_depth: 3
+# Bibliography and citation tips provided by 
+# https://bookdown.org/yihui/rmarkdown-cookbook/bibliography.html
 bibliography: references.bib 
+csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
@@ -31,14 +34,21 @@ To re-create this vignette in R, users are required to install
 
 ### annualExoDiscoveries()
 
+This custom function programmatically retrieves data from the [NASA Exoplanet Archive's TAP service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples). Users can specify one of two tables - Planetary Systems (**ps**) or Planetary Systems Composite Parameters (**pscomppars**) - as well as a range for the year(s) in which planets were discovered. The default values for this function are:
+
+* `tableName = "pscomppars"` - according to the [table definitions](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) for **ps** and **pscomppars**, "PSCompPars is a more filled-in table, with only one row per planet, enabling a more statistical view of the known exoplanet population and their host environments. This table provides a more complete, though not necessarily self-consistent, set of parameters".
+* `startYear = 1989` - the earliest listing in the PSCompPars table, attributed to the planet [HD 114762 b](https://exoplanetarchive.ipac.caltech.edu/overview/HD%20114762%20b#planet_data_HD-114762-b).  
+* `endYear = as.integer(format(Sys.Date(), "%Y"))` - the current calendar year as understood by the user's computer. 
+* `controversial = 0` - exclude planets for which the confirmation status "has been questioned in the published literature". 
+
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve exoplanet names, discovery year, and discovery method.
 # Defaults start in the year 1989 (earliest year in the pscomppars table)
 # and end in the current calendar year: format(Sys.Date(), "%Y").
 
-annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), controversial = 0){
+annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, endYear = as.integer(format(Sys.Date(), "%Y")), controversialFlag = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -50,6 +60,13 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 }
 ```
 
+### calculateHZ
+
+This function calculates exoplanetary habitable zones and their associated stellar flux boundaries. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ is defined as $S_{eff} = S_{eff \odot} + aT_{\star} + bT_{\star}^2+ cT_{\star}^3 + dT_{\star}^4$ and the corresponding habiatability zone distances, $d$, are defined as $d = (\frac{L/L \odot}{S_{eff}})^{0.5}$ AU. The required parameters for this function are:
+
+* `tempEff` - a vector of stellar effective temperatures. $T_{eff}$ is defined as the difference between `tempEff` ($T_{eff}$) and 5780 K, $T_{\star} = T_{eff} - 5780$. 
+* `luminosityRatio` - a vector of values for the ratio $\frac{L}{L \odot}$, found in the `annualExoDiscoveries` function by calculating the inverse logarithm of `st_lum` (the stellar luminosity in the **PSCompPars** table, provided in units of $log(Solar)$). The values in this vector are used to calculate the habiatability zone distances, $d$.
+
 ```{r , echo=TRUE, eval=TRUE}
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
 # Distances returned in Astronomical Units (AU).
@@ -58,7 +75,7 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 # Re-factored to R from John Armstrong's Python code at
 # https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
 
-calculateHZ <- function(t_eff, luminosityRatio, planetMass){
+calculateHZ <- function(tempEff, luminosityRatio){
   
   # Initiate vectors
   s_eff <- vector()
@@ -78,7 +95,7 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   c <- c(-1.332e-11, -8.308e-12, -3.198e-12, -2.874e-12, -8.968e-12, -7.418e-12)
   d <- c(-3.097e-15, -1.931e-15, -5.575e-16, -5.011e-16, -2.084e-15, -1.713e-15)
   
-  t_star <- t_eff-5780
+  t_star <- tempEff-5780
   
   for (i in 1:length(a)){
     s_eff[i] <- s_eff_sun[i] + a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
@@ -86,9 +103,9 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
     
     optimisticInnerDist <- distanceFromStar[1]
     optimisticOuterDist <- distanceFromStar[4]
-  
+    
   }
-
+  
   optimisticInnerDist <- distanceFromStar[1]
   optimisticOuterDist <- distanceFromStar[4]
   
@@ -97,7 +114,6 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   
   return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
               optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
-  
 }
 ```
 
@@ -130,8 +146,7 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
       
       
       hzVars <- calculateHZ(effectiveTempCol[i], 
-                            luminosityRatioCol[i],
-                            earthMassCol[i])
+                            luminosityRatioCol[i])
       
       data$innerHZ[i] <- hzVars[[1]]
       data$outerHZ[i] <- hzVars[[2]]

@@ -4,6 +4,7 @@ NASA API Vignette
 -   [Package requirements](#package-requirements)
 -   [Custom functions](#custom-functions)
     -   [annualExoDiscoveries()](#annualexodiscoveries)
+    -   [calculateHZ](#calculatehz)
 -   [Exploratory Data Analysis](#exploratory-data-analysis)
 -   [References](#references)
 
@@ -34,14 +35,37 @@ To re-create this vignette in R, users are required to install
 
 ### annualExoDiscoveries()
 
+This custom function programmatically retrieves data from the [NASA
+Exoplanet Archive’s TAP
+service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples).
+Users can specify one of two tables - Planetary Systems (**ps**) or
+Planetary Systems Composite Parameters (**pscomppars**) - as well as a
+range for the year(s) in which planets were discovered. The default
+values for this function are:
+
+-   `tableName = "pscomppars"` - according to the [table
+    definitions](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
+    for **ps** and **pscomppars**, “PSCompPars is a more filled-in
+    table, with only one row per planet, enabling a more statistical
+    view of the known exoplanet population and their host environments.
+    This table provides a more complete, though not necessarily
+    self-consistent, set of parameters.”
+-   `startYear = 1989` - the earliest listing in the PSCompPars table,
+    attributed to the planet [HD 114762
+    b](https://exoplanetarchive.ipac.caltech.edu/overview/HD%20114762%20b#planet_data_HD-114762-b).  
+-   `endYear = as.integer(format(Sys.Date(), "%Y"))` - the current
+    calendar year as understood by the user’s computer.
+-   `controversial = 0` - exclude planets for which the confirmation
+    status “has been questioned in the published literature.”
+
 ``` r
 # Retrieve exoplanet names, discovery year, and discovery method.
 # Defaults start in the year 1989 (earliest year in the pscomppars table)
 # and end in the current calendar year: format(Sys.Date(), "%Y").
 
-annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), controversial = 0){
+annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, endYear = as.integer(format(Sys.Date(), "%Y")), controversialFlag = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -53,6 +77,28 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 }
 ```
 
+### calculateHZ
+
+This function calculates exoplanetary habitable zones and their
+associated stellar flux boundaries. The calculations are based on
+formulae defined by Kopparapu et al., whereby the effective solar flux
+*S*<sub>*e**f**f*</sub> is defined as
+*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>⋆</sub> + *b**T*<sub>⋆</sub><sup>2</sup> + *c**T*<sub>⋆</sub><sup>3</sup> + *d**T*<sub>⋆</sub><sup>4</sup>
+and the corresponding habiatability zone distances, *d*, are defined as
+$d = (\\frac{L/L \\odot}{S\_{eff}})^{0.5}$ AU. The required parameters
+for this function are:
+
+-   `tempEff` - a vector of stellar effective temperatures.
+    *T*<sub>*e**f**f*</sub> is defined as the difference between
+    `tempEff` (*T*<sub>*e**f**f*</sub>) and 5780 K,
+    *T*<sub>⋆</sub> = *T*<sub>*e**f**f*</sub> − 5780.
+-   `luminosityRatio` - a vector of values for the ratio
+    $\\frac{L}{L \\odot}$, found in the `annualExoDiscoveries` function
+    by calculating the inverse logarithm of `st_lum` (the stellar
+    luminosity in the **PSCompPars** table, provided in units of
+    *l**o**g*(*S**o**l**a**r*)). The values in this vector are used to
+    calculate the habiatability zone distances, *d*.
+
 ``` r
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
 # Distances returned in Astronomical Units (AU).
@@ -61,7 +107,7 @@ annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format
 # Re-factored to R from John Armstrong's Python code at
 # https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
 
-calculateHZ <- function(t_eff, luminosityRatio, planetMass){
+calculateHZ <- function(tempEff, luminosityRatio){
   
   # Initiate vectors
   s_eff <- vector()
@@ -81,7 +127,7 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   c <- c(-1.332e-11, -8.308e-12, -3.198e-12, -2.874e-12, -8.968e-12, -7.418e-12)
   d <- c(-3.097e-15, -1.931e-15, -5.575e-16, -5.011e-16, -2.084e-15, -1.713e-15)
   
-  t_star <- t_eff-5780
+  t_star <- tempEff-5780
   
   for (i in 1:length(a)){
     s_eff[i] <- s_eff_sun[i] + a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
@@ -89,9 +135,9 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
     
     optimisticInnerDist <- distanceFromStar[1]
     optimisticOuterDist <- distanceFromStar[4]
-  
+    
   }
-
+  
   optimisticInnerDist <- distanceFromStar[1]
   optimisticOuterDist <- distanceFromStar[4]
   
@@ -100,7 +146,6 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
   
   return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
               optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
-  
 }
 ```
 
@@ -133,8 +178,7 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
       
       
       hzVars <- calculateHZ(effectiveTempCol[i], 
-                            luminosityRatioCol[i],
-                            earthMassCol[i])
+                            luminosityRatioCol[i])
       
       data$innerHZ[i] <- hzVars[[1]]
       data$outerHZ[i] <- hzVars[[2]]
@@ -221,7 +265,7 @@ head(exoplanetCount)
     ## 5      [Fe/H]   0.28      0.29922646
     ## 6      [Fe/H]  -0.04      0.42461956
 
-As of Sat Oct 2 22:23:01 2021, the NASA Exoplanet Archive’s [Planetary
+As of Sun Oct 3 00:07:48 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed and unconfirmed exoplanet
@@ -247,7 +291,7 @@ annualDiscoveries + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ``` r
 # Contingency table, total number of exoplanets found with each discovery method
@@ -324,7 +368,7 @@ orbEccenCDF <- ggplot(densityOrbtialProp, aes(x = pl_orbeccen))
 orbEccenCDF + stat_ecdf(geom = "step")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 # Scatter plot of masses/radii for discovered exoplanets
@@ -336,7 +380,7 @@ orbsEccenScatter + geom_point(alpha = 0.6, position = "jitter") +
        title = "Comparison of radius and logarithmic mass amongst known exoplanets")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
 ``` r
 metallicityData <- annualExoDiscoveries() 
@@ -359,7 +403,7 @@ metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), a
     ## `stat_bin()` using `bins = 30`. Pick better
     ## value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 The Planetary Habitability Laboratory outlines its [general habitability
 criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods)
@@ -373,7 +417,7 @@ as follows:
     mass between 0.1 to 10 Earth masses.
 
 We can calculate the maxima and minima for habitable zones and flux
-using formulae provided by Kopparapu et al. (Kopparapu et al. 2014).
+using formulae provided by Kopparapu et al. (Kopparapu et al., 2014).
 
 ``` r
 # Grab up-to-date data from API
@@ -428,7 +472,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_bmasse), alpha = 0.6, p
     ## Warning: Removed 26 rows containing missing values
     ## (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ``` r
 planetClusters <- annualExoDiscoveries()
@@ -800,7 +844,7 @@ metallicityHisto + geom_histogram(aes(fill = category)) +
     ## `stat_bin()` using `bins = 30`. Pick better
     ## value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 orbPerEccen <- annualExoDiscoveries() 
@@ -812,19 +856,19 @@ exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha
     ## Warning: Removed 552 rows containing missing values
     ## (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ## References
 
-<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="refs" class="references csl-bib-body hanging-indent"
+line-spacing="2">
 
 <div id="ref-Kopparapu_2014" class="csl-entry">
 
-Kopparapu, Ravi Kumar, Ramses M. Ramirez, James SchottelKotte, James F.
-Kasting, Shawn Domagal-Goldman, and Vincent Eymet. 2014. “HABITABLE
-ZONES AROUND MAIN-SEQUENCE STARS: DEPENDENCE ON PLANETARY MASS.” *The
-Astrophysical Journal* 787 (2): L29.
-<https://doi.org/10.1088/2041-8205/787/2/l29>.
+Kopparapu, R. K., Ramirez, R. M., SchottelKotte, J., Kasting, J. F.,
+Domagal-Goldman, S., & Eymet, V. (2014). HABITABLE ZONES AROUND
+MAIN-SEQUENCE STARS: DEPENDENCE ON PLANETARY MASS. *The Astrophysical
+Journal*, *787*(2), L29. <https://doi.org/10.1088/2041-8205/787/2/l29>
 
 </div>
 
