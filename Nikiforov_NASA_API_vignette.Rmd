@@ -2,7 +2,7 @@
 title: "NASA API Vignette"
 always_allow_html: true
 output: github_document
-bibliography: references.bib 
+#bibliography: references.bib 
 ---
 
 ```{r setup, include=FALSE}
@@ -25,6 +25,24 @@ To re-create this vignette in R, users are required to install
 * **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/).   
 
 ## Custom functions
+```{r , echo=TRUE, eval=TRUE}
+# Retrieve exoplanet names, discovery year, and discovery method.
+# Defaults start in the year 1989 (earliest year in the pscomppars table)
+# and end in the current calendar year: format(Sys.Date(), "%Y").
+
+annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), controversial = 0){
+  # Create URL string
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
+  # Provide string to httr GET function
+  apiCall <- GET(urlString)
+  # Convert JSON content to data frame, rename columns
+  apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() %>%
+    mutate(luminosityRatio = 10^(st_lum)) 
+  
+  # Return formatted data frame
+  return(apiContent)
+}
+```
 
 ```{r , echo=TRUE, eval=TRUE}
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
@@ -77,31 +95,9 @@ calculateHZ <- function(t_eff, luminosityRatio, planetMass){
 }
 ```
 
-
 ```{r , echo=TRUE, eval=TRUE}
-# Retrieve exoplanet names, discovery year, and discovery method.
-# Defaults start in the year 1989 (earliest year in the pscomppars table)
-# and end in the current calendar year: format(Sys.Date(), "%Y").
-
-annualExoDiscoveries <- function(start_year = 1989, end_year = as.integer(format(Sys.Date(), "%Y")), controversial = 0){
-  # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+pscomppars+where+disc_year+between+", start_year, "+and+", end_year, "+and+pl_controv_flag+=+", controversial, "&format=json")
-  # Provide string to httr GET function
-  apiCall <- GET(urlString)
-  # Convert JSON content to data frame, rename columns
-  apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() %>%
-    mutate(luminosityRatio = 10^(st_lum)) 
-  
-  # Return formatted data frame
-  return(apiContent)
-}
-```
-
-```{r , echo=TRUE, eval=TRUE}
-
-exoDataTest <- annualExoDiscoveries()
-exoDataTest
-
+# Customer function to calculate values for 
+# inner and outer habitable zone, flux
 hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse", 
                              starSpecTypeCol = "st_spectype", 
                              effectiveTempCol = "st_teff",
@@ -147,9 +143,6 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
   
   return(data)
 }
-
-hzFluxCalculator(exoDataTest)
-
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -171,22 +164,10 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
   
   return(habitablePlanets)
 }
-
-# Run function using "optimistic" parameters from
-# Planetary Habitability Laboratory
-
-testData <- hzFluxCalculator(exoDataTest)
-
-listHabitablePlanets <- habitableExoFinder(testData, minTemp = 181, maxTemp = 279,
-                                           maxEarthMass = 10, maxEarthRadius = 2.5)
-listHabitablePlanets
-
 ```
 
 
 ## Exploratory Data Analysis
-
-### Basic summaries
 
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve latest exoplanet data
@@ -269,13 +250,20 @@ metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), a
        subtitle = "Grouped by discovery method") 
 ```
 
-
-### Habitable planet summary
-
 We can calculate the maxima and minima for habitable zones and flux using formulae provided by Kopparapu et al. [@Kopparapu_2014]. 
 
 ```{r , echo=TRUE, eval=TRUE}
+# Grab up-to-date data from API
+planetData <- annualExoDiscoveries()
 
+# Calculate maxima/minima for habitabilize zone and flux for each exoplanet
+hzFluxData <- hzFluxCalculator(planetData)
+
+# List habitable planets using "optimistic" parameters from
+# Planetary Habitability Laboratory
+listHabitablePlanets <- habitableExoFinder(testData, minTemp = 181, maxTemp = 279,
+                                           maxEarthMass = 10, maxEarthRadius = 2.5)
+listHabitablePlanets
 ```
 
 
