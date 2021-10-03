@@ -1,7 +1,10 @@
 ---
 title: "NASA API Vignette"
 always_allow_html: true
-output: github_document
+output: 
+  github_document:
+    toc: true
+    toc_depth: 3
 bibliography: references.bib 
 ---
 
@@ -25,6 +28,9 @@ To re-create this vignette in R, users are required to install
 * **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/).   
 
 ## Custom functions
+
+### annualExoDiscoveries()
+
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve exoplanet names, discovery year, and discovery method.
 # Defaults start in the year 1989 (earliest year in the pscomppars table)
@@ -174,12 +180,9 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 exoplanetCount <- annualExoDiscoveries()
 
 # Display in a searchable table using DT library's datatable function
-datatable(exoplanetCount)
+head(exoplanetCount)
 ```
-<<<<<<< HEAD
 
-=======
->>>>>>> 766f0dc8e43a1f09dd9420218c69a69394a10517
 As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed and unconfirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -199,17 +202,16 @@ annualDiscoveries + geom_bar(aes(fill = discoverymethod),
             vjust=0.5, hjust = -0.01, size = 2.2) +
   coord_flip() 
 ```
-<<<<<<< HEAD
-
-=======
->>>>>>> 766f0dc8e43a1f09dd9420218c69a69394a10517
-Of the known `r length(exoplanetCount$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed transiting their host star. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. The contingency table below summarizes the cumulative number of observations for the remaining discovery methods.  
 
 ```{r , echo=TRUE, eval=TRUE}
 # Contingency table, total number of exoplanets found with each discovery method
 discoveriesByMethod <- table(exoData$discoverymethod)
 discoveriesByMethod
 ```
+
+Of the known `r length(exoplanetCount$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed transiting their host star. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. The contingency table below summarizes the cumulative number of observations for the remaining discovery methods.  
+
+
 ```{r , echo=TRUE, eval=TRUE}
 summary(exoData$pl_bmasse)
 summary(exoData$pl_rade)
@@ -267,9 +269,9 @@ hzFluxData <- hzFluxCalculator(planetData)
 
 # List habitable planets using "optimistic" parameters from
 # Planetary Habitability Laboratory
-listHabitablePlanets <- habitableExoFinder(testData, minTemp = 181, maxTemp = 279,
+listHabitablePlanets <- habitableExoFinder(hzFluxData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
-listHabitablePlanets
+head(listHabitablePlanets)
 ```
 
 
@@ -318,10 +320,12 @@ metallicityHisto + geom_histogram(aes(fill = category)) +
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryScatter <- ggplot(discoveryYrMthd, aes(x = log(pl_orbper), y = pl_orbeccen))
+orbPerEccen <- annualExoDiscoveries() 
+
+exoDiscoveryScatter <- ggplot(orbPerEccen, aes(x = log(pl_orbper), y = pl_orbeccen))
 exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha = 0.6, position = "jitter")
 ```
 
-# References
+## References
 
 
