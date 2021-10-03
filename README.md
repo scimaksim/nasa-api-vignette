@@ -5,6 +5,8 @@ NASA API Vignette
 -   [Custom functions](#custom-functions)
     -   [annualExoDiscoveries()](#annualexodiscoveries)
     -   [calculateHZ](#calculatehz)
+    -   [hzFluxCalculator()](#hzfluxcalculator)
+    -   [habitableExoFinder()](#habitableexofinder)
 -   [Exploratory Data Analysis](#exploratory-data-analysis)
 -   [References](#references)
 
@@ -80,24 +82,30 @@ annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, end
 ### calculateHZ
 
 This function calculates exoplanetary habitable zones and their
-associated stellar flux boundaries. The calculations are based on
-formulae defined by Kopparapu et al., whereby the effective solar flux
-*S*<sub>*e**f**f*</sub> is defined as
+associated stellar flux boundaries for a star of effective temperature
+`tempEff` and a stellar luminosity `luminosityRatio`. The calculations
+are based on formulae defined by Kopparapu et al., whereby the effective
+solar flux *S*<sub>*e**f**f*</sub> is defined as
 *S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>⋆</sub> + *b**T*<sub>⋆</sub><sup>2</sup> + *c**T*<sub>⋆</sub><sup>3</sup> + *d**T*<sub>⋆</sub><sup>4</sup>
 and the corresponding habiatability zone distances, *d*, are defined as
-$d = (\\frac{L/L \\odot}{S\_{eff}})^{0.5}$ AU. The required parameters
-for this function are:
+$d = (\\frac{L/L \\odot}{S\_{eff}})^{0.5}$ AU (Kopparapu et al., 2014).
+The required parameters for this function are:
 
--   `tempEff` - a vector of stellar effective temperatures.
+-   `tempEff` - the effective temperature of a star.
     *T*<sub>*e**f**f*</sub> is defined as the difference between
     `tempEff` (*T*<sub>*e**f**f*</sub>) and 5780 K,
     *T*<sub>⋆</sub> = *T*<sub>*e**f**f*</sub> − 5780.
--   `luminosityRatio` - a vector of values for the ratio
-    $\\frac{L}{L \\odot}$, found in the `annualExoDiscoveries` function
-    by calculating the inverse logarithm of `st_lum` (the stellar
-    luminosity in the **PSCompPars** table, provided in units of
-    *l**o**g*(*S**o**l**a**r*)). The values in this vector are used to
-    calculate the habiatability zone distances, *d*.
+-   `luminosityRatio` - stellar luminosity, defined as the ratio
+    $\\frac{L}{L \\odot}$. These values are calculated in the
+    `annualExoDiscoveries` function by finding the inverse logarithm of
+    `st_lum` (the stellar luminosity in the **PSCompPars** table,
+    provided in units of *l**o**g*(*S**o**l**a**r*)). The values in this
+    vector are used to calculate the habiatability zone distances, *d*.
+
+The output of this function is a list with four numeric parameters -
+*optimisticInnerDist*, *optimisticOuterDist*, *optimisticInnerFlux*, and
+*optimisticOuterFlux* - which are used in the function
+`hzFluxCalculator()`.
 
 ``` r
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
@@ -147,7 +155,39 @@ calculateHZ <- function(tempEff, luminosityRatio){
   return(list(optimisticInnerDist = optimisticInnerDist, optimisticOuterDist = optimisticOuterDist, 
               optimisticInnerFlux = optimisticInnerFlux, optimisticOuterFlux = optimisticOuterFlux))
 }
+
+testVals <- annualExoDiscoveries()
+funcTest <- calculateHZ(5780, 1.5)
+str(funcTest)
 ```
+
+    ## List of 4
+    ##  $ optimisticInnerDist: num 0.919
+    ##  $ optimisticOuterDist: num 2.17
+    ##  $ optimisticInnerFlux: num 1.78
+    ##  $ optimisticOuterFlux: num 0.32
+
+### hzFluxCalculator()
+
+This custom function calculates the minima and the maxima for a planet’s
+habitability zone (in units of *AU*) and stellar flux (in units of
+*dex*). It requires the name of a data set and operates with the
+following default parameters:
+
+-   `earthMassCol = "pl_bmasse"` - a vector with planetary masses in
+    units of Earth mass (*M*⊕).
+-   `starSpecTypeCol = "st_spectype"` - a vector listing the spectral
+    type of host stars.
+-   `effectiveTempCol = "st_teff"` - a vector listing the effective
+    temperatures of host stars.
+-   `luminosityRatioCol = "luminosityRatio"` - a vector with the stellar
+    luminosity ratios, $\\frac{L}{L \\odot}$.
+
+These default column names are based on the variables in the [Planetary
+Systems Composite Parameters
+(PSCompPars)](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
+table. `luminosityRatioCol` is calculated and appended to each data
+frame that stems from the `annualExoDiscoveries()` function.
 
 ``` r
 # Customer function to calculate values for 
@@ -197,6 +237,20 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
   return(data)
 }
 ```
+
+### habitableExoFinder()
+
+This function produces a data frame of potentially habitable exoplanets
+based on a set of parameters. The default parameters are:
+
+-   `minEarthMass = 0.1` -
+-   `maxEarthMass = 5` -
+-   `minEarthRadius = 0.5` -
+-   `maxEarthRadius = 1.5` -
+-   `maxInnerFlux = 1.5` -
+-   `maxOuterFlux = 0.20` -
+-   `minTemp = 273` -
+-   `maxTemp = 340` -
 
 ``` r
 # Create function to identify potentially habitable exoplanets. 
@@ -265,7 +319,7 @@ head(exoplanetCount)
     ## 5      [Fe/H]   0.28      0.29922646
     ## 6      [Fe/H]  -0.04      0.42461956
 
-As of Sun Oct 3 00:07:48 2021, the NASA Exoplanet Archive’s [Planetary
+As of Sun Oct 3 00:39:53 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed and unconfirmed exoplanet
