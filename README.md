@@ -34,6 +34,8 @@ To re-create this vignette in R, users are required to install
     plotmath expressions.” This is useful for labeling masses and radii
     on plots using [solar system
     symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/).
+-   **[ggrepel](https://ggrepel.slowkow.com/)** - eliminate overlapping
+    text labels in the `ggplot2` exoplanet mass-radius diagram.
 
 ## Custom functions
 
@@ -69,7 +71,7 @@ values for this function are:
 
 annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, endYear = as.integer(format(Sys.Date(), "%Y")), controversialFlag = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -305,28 +307,28 @@ exoplanetData <- annualExoDiscoveries()
 exoplanetData
 ```
 
-    ## # A tibble: 4,501 × 19
-    ##    pl_name      disc_year discoverymethod pl_orbper
-    ##    <chr>            <int> <chr>               <dbl>
-    ##  1 OGLE-2016-B…      2020 Microlensing        NA   
-    ##  2 GJ 480 b          2020 Radial Velocity      9.57
-    ##  3 Kepler-276 c      2013 Transit             31.9 
-    ##  4 Kepler-829 b      2016 Transit              6.88
-    ##  5 K2-283 b          2018 Transit              1.92
-    ##  6 Kepler-477 b      2016 Transit             11.1 
-    ##  7 HAT-P-15 b        2010 Transit             10.9 
-    ##  8 HD 149143 b       2005 Radial Velocity      4.07
-    ##  9 HD 210702 b       2007 Radial Velocity    354.  
-    ## 10 HIP 12961 b       2010 Radial Velocity     57.4 
-    ## # … with 4,491 more rows, and 15 more variables:
-    ## #   pl_rade <dbl>, pl_bmasse <dbl>, pl_radj <dbl>,
-    ## #   pl_bmassj <dbl>, pl_eqt <dbl>,
+    ## # A tibble: 4,501 × 20
+    ##    pl_name      disc_year discoverymethod
+    ##    <chr>            <int> <chr>          
+    ##  1 OGLE-2016-B…      2020 Microlensing   
+    ##  2 GJ 480 b          2020 Radial Velocity
+    ##  3 Kepler-276 c      2013 Transit        
+    ##  4 Kepler-829 b      2016 Transit        
+    ##  5 K2-283 b          2018 Transit        
+    ##  6 Kepler-477 b      2016 Transit        
+    ##  7 HAT-P-15 b        2010 Transit        
+    ##  8 HD 149143 b       2005 Radial Velocity
+    ##  9 HD 210702 b       2007 Radial Velocity
+    ## 10 HIP 12961 b       2010 Radial Velocity
+    ## # … with 4,491 more rows, and 17 more
+    ## #   variables: pl_orbper <dbl>,
+    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
+    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
+    ## #   pl_eqt <dbl>, pl_dens <dbl>,
     ## #   st_spectype <chr>, st_teff <dbl>,
-    ## #   st_lum <dbl>, pl_controv_flag <int>,
-    ## #   pl_orbeccen <dbl>, pl_orbsmax <dbl>,
-    ## #   st_mass <dbl>, st_metratio <chr>, …
+    ## #   st_lum <dbl>, …
 
-As of Sun Oct 3 12:02:15 2021, the NASA Exoplanet Archive’s [Planetary
+As of Sun Oct 3 16:51:37 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -354,7 +356,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-161-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -391,66 +393,133 @@ star. Another 19.4% were observed indirectly via the radial velocity
 method, whereby the planet and its star orbit around a common center of
 gravity and prompt noticeable Doppler shifts in the stellar spectrum.
 
+Additionally, planets with radii in the range of 0.1 − 5*R*⊕ comprise
+more than 60% of the data set. A second cluster of radii in the range
+10 − 15*R*⊕ comprise an additional 20%.
+
 ``` r
-ggplot(annualDiscoveries, aes(x = discoverymethod)) + 
-  geom_bar(aes(y = (..count..)/sum(..count..)))
+radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
+radiiFreq + geom_histogram(color = "blue", fill = "red", 
+                           aes(y = (..count..)/sum(..count..)),
+                           binwidth = 2) +
+  labs(title="Distribution of planetary radii") +
+  labs(x = TeX(r'(Radius $(R\oplus$))'), 
+       y = "Frequency") +
+  geom_density()
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+    ## Warning: Removed 9 rows containing non-finite
+    ## values (stat_bin).
+
+    ## Warning: Removed 9 rows containing non-finite
+    ## values (stat_density).
+
+![](README_files/figure-gfm/unnamed-chunk-163-1.png)<!-- -->
+
+By combining radii with the masses of planets, we can produce a
+mass-radius diagram and calculate planetary densities. From this
+diagram, it is also apparent that planetary radii tend to increase with
+mass until approximately 1000*M*⊕, at which point gravity impels even
+the hardiest planetary material to compress and constrains further
+radial growth (Hoolst et al., 2019).
+
+``` r
+# New vector with temporary data
+tempMassData <- exoplanetData 
+
+# Scatter plot of masses/radii for discovered exoplanets
+# Use LaTeX to denote the standard astronomical symbol for the Earth
+tempMassScatter <- ggplot(tempMassData, aes(x = pl_bmasse, y = pl_rade))
+tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, position = "jitter") +
+  scale_color_gradientn(colours = heat.colors(5)) +
+  labs(x = TeX(r'(Planet mass $(log(M\oplus))]$))'), y = TeX(r'(Planet radius $(R\oplus)$)'),
+       title = "Planetary mass-radius diagram", col = "Equilbrium temperature (K)",
+       size = TeX(r'(Planet density $(g/cm^3)$)')) +
+  # Label planets exceeding R = 25 (Earth), eliminate overlapping labels
+  # using geom_text_repel from the ggrepel package
+  geom_text_repel(aes(label = ifelse(pl_rade >= 25, pl_name,''))) +
+  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x)))
+```
+
+    ## Warning: Removed 99 rows containing missing
+    ## values (geom_point).
+
+    ## Warning: Removed 26 rows containing missing
+    ## values (geom_text_repel).
+
+![](README_files/figure-gfm/unnamed-chunk-164-1.png)<!-- -->
+
+``` r
+# New vector with temporary data
+orbsmaxMassData <- exoplanetData 
+
+# Scatter plot of masses/radii for discovered exoplanets
+# Use LaTeX to denote the standard astronomical symbol for the Earth
+orbsmaxMassScatter <- ggplot(orbsmaxMassData, aes(x = pl_orbsmax, y = pl_bmasse))
+orbsmaxMassScatter + geom_point(alpha = 0.6, position = "jitter") +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
+    ## Warning: Removed 197 rows containing missing
+    ## values (geom_point).
+
+![](README_files/figure-gfm/unnamed-chunk-165-1.png)<!-- -->
 
 ``` r
 summary(annualDiscoveries$pl_bmasse)
 ```
 
-    ##     Min.  1st Qu.   Median     Mean  3rd Qu. 
-    ##     0.02     3.97     8.55   415.65   167.73 
-    ##     Max.     NA's 
-    ## 45700.00       17
+    ##     Min.  1st Qu.   Median     Mean 
+    ##     0.02     3.97     8.55   415.65 
+    ##  3rd Qu.     Max.     NA's 
+    ##   167.73 45700.00       17
 
 ``` r
 summary(annualDiscoveries$pl_rade)
 ```
 
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##   0.296   1.760   2.740   5.703  11.994  33.600 
-    ##    NA's 
-    ##       9
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu. 
+    ##   0.296   1.760   2.740   5.703  11.994 
+    ##    Max.    NA's 
+    ##  33.600       9
 
 ``` r
 summary(annualDiscoveries$pl_orbeccen)
 ```
 
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.0000  0.0000  0.0000  0.0697  0.0722  0.9500 
-    ##    NA's 
-    ##     533
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu. 
+    ##  0.0000  0.0000  0.0000  0.0697  0.0722 
+    ##    Max.    NA's 
+    ##  0.9500     533
 
 ``` r
 summary(annualDiscoveries$pl_bmasse)
 ```
 
-    ##     Min.  1st Qu.   Median     Mean  3rd Qu. 
-    ##     0.02     3.97     8.55   415.65   167.73 
-    ##     Max.     NA's 
-    ## 45700.00       17
+    ##     Min.  1st Qu.   Median     Mean 
+    ##     0.02     3.97     8.55   415.65 
+    ##  3rd Qu.     Max.     NA's 
+    ##   167.73 45700.00       17
 
 ``` r
 summary(annualDiscoveries$pl_rade)
 ```
 
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##   0.296   1.760   2.740   5.703  11.994  33.600 
-    ##    NA's 
-    ##       9
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu. 
+    ##   0.296   1.760   2.740   5.703  11.994 
+    ##    Max.    NA's 
+    ##  33.600       9
 
 ``` r
 summary(annualDiscoveries$pl_orbeccen)
 ```
 
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##  0.0000  0.0000  0.0000  0.0697  0.0722  0.9500 
-    ##    NA's 
-    ##     533
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu. 
+    ##  0.0000  0.0000  0.0000  0.0697  0.0722 
+    ##    Max.    NA's 
+    ##  0.9500     533
 
 ``` r
 # Masses, radii, eccentricities, and orbit semi-major axes
@@ -463,7 +532,7 @@ orbEccenCDF <- ggplot(densityOrbtialProp, aes(x = pl_orbeccen))
 orbEccenCDF + stat_ecdf(geom = "step")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-168-1.png)<!-- -->
 
 ``` r
 # Scatter plot of masses/radii for discovered exoplanets
@@ -475,7 +544,7 @@ orbsEccenScatter + geom_point(alpha = 0.6, position = "jitter") +
        title = "Comparison of radius and logarithmic mass amongst known exoplanets")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-168-2.png)<!-- -->
 
 ### Habitability summaries
 
@@ -492,15 +561,18 @@ metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), a
        subtitle = "Grouped by discovery method") 
 ```
 
-    ## Warning: Ignoring unknown parameters: adjust
+    ## Warning: Ignoring unknown parameters:
+    ## adjust
 
-    ## Warning: Use of `metallicityData$discoverymethod`
-    ## is discouraged. Use `discoverymethod` instead.
+    ## Warning: Use of
+    ## `metallicityData$discoverymethod` is
+    ## discouraged. Use `discoverymethod`
+    ## instead.
 
-    ## `stat_bin()` using `bins = 30`. Pick better
-    ## value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick
+    ## better value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-169-1.png)<!-- -->
 
 We can calculate the maxima and minima for habitable zones and flux
 using formulae provided by Kopparapu et al. (Kopparapu et al., 2014).
@@ -520,37 +592,19 @@ head(listHabitablePlanets)
 ```
 
     ## # A tibble: 6 × 11
-    ##   pl_name     pl_eqt spectralClass pl_bmasse pl_rade
-    ##   <chr>        <dbl> <chr>             <dbl>   <dbl>
-    ## 1 GJ 180 c       NA  M                  6.4     2.41
-    ## 2 GJ 433 d       NA  M                  5.22    2.14
-    ## 3 GJ 832 c       NA  M                  5.4     2.18
-    ## 4 Wolf 1061 c    NA  M                  3.41    1.66
-    ## 5 GJ 682 b       NA  M                  4.4     1.93
-    ## 6 K2-288 B b    226. M                  4.27    1.9 
-    ## # … with 6 more variables: pl_orbeccen <dbl>,
+    ##   pl_name     pl_eqt spectralClass pl_bmasse
+    ##   <chr>        <dbl> <chr>             <dbl>
+    ## 1 GJ 180 c       NA  M                  6.4 
+    ## 2 GJ 433 d       NA  M                  5.22
+    ## 3 GJ 832 c       NA  M                  5.4 
+    ## 4 Wolf 1061 c    NA  M                  3.41
+    ## 5 GJ 682 b       NA  M                  4.4 
+    ## 6 K2-288 B b    226. M                  4.27
+    ## # … with 7 more variables:
+    ## #   pl_rade <dbl>, pl_orbeccen <dbl>,
     ## #   pl_orbsmax <dbl>, innerHZ <dbl>,
     ## #   outerHZ <dbl>, innerFlux <dbl>,
     ## #   outerFlux <dbl>
-
-``` r
-# New vector with temporary data
-tempMassData <- exoplanetData 
-
-# Scatter plot of masses/radii for discovered exoplanets
-# Use LaTeX to denote the standard astronomical symbol for the Earth
-tempMassScatter <- ggplot(tempMassData, aes(x = log10(pl_bmasse), y = pl_rade))
-tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_bmasse), alpha = 0.6, position = "jitter") +
-  scale_color_gradientn(colours = heat.colors(5)) +
-  labs(x = TeX(r'(Mass $(log(M\oplus))]$))'), y = TeX(r'(Radius $(R\oplus)$)'),
-       title = "Comparison of radius and logarithmic mass amongst known exoplanets", col = "Equilbrium temperature (K)",
-       size = TeX(r'(Planet Mass $(M\oplus)$)'))
-```
-
-    ## Warning: Removed 26 rows containing missing values
-    ## (geom_point).
-
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ``` r
 planetClusters <- exoplanetData
@@ -566,19 +620,20 @@ metallicityData %>% mutate(category = NA)
 ```
 
     ## # A tibble: 849 × 6
-    ##    st_metratio st_met pl_bmassj pl_bmasse pl_orbper
-    ##    <chr>        <dbl>     <dbl>     <dbl>     <dbl>
-    ##  1 [Fe/H]        0.22     1.94       617.     10.9 
-    ##  2 [Fe/H]        0.29     1.33       423.      4.07
-    ##  3 [Fe/H]        0.04     1.81       575.    354.  
-    ##  4 [Fe/H]        0.05     1.19       378.      4.19
-    ##  5 [Fe/H]        0.14     1.68       534.    780.  
-    ##  6 [Fe/H]        0.41     3.74      1189.   4375   
-    ##  7 [Fe/H]        0.18     0.899      286.      2.98
-    ##  8 [Fe/H]       -0.46     3.88      1233.    479.  
-    ##  9 [Fe/H]       -0.09     7.49      2380.    117.  
-    ## 10 [Fe/H]       -0.03     1.99       632.    453.  
-    ## # … with 839 more rows, and 1 more variable:
+    ##    st_metratio st_met pl_bmassj pl_bmasse
+    ##    <chr>        <dbl>     <dbl>     <dbl>
+    ##  1 [Fe/H]        0.22     1.94       617.
+    ##  2 [Fe/H]        0.29     1.33       423.
+    ##  3 [Fe/H]        0.04     1.81       575.
+    ##  4 [Fe/H]        0.05     1.19       378.
+    ##  5 [Fe/H]        0.14     1.68       534.
+    ##  6 [Fe/H]        0.41     3.74      1189.
+    ##  7 [Fe/H]        0.18     0.899      286.
+    ##  8 [Fe/H]       -0.46     3.88      1233.
+    ##  9 [Fe/H]       -0.09     7.49      2380.
+    ## 10 [Fe/H]       -0.03     1.99       632.
+    ## # … with 839 more rows, and 2 more
+    ## #   variables: pl_orbper <dbl>,
     ## #   category <lgl>
 
 ``` r
@@ -599,10 +654,10 @@ metallicityHisto + geom_histogram(aes(fill = category)) +
        title = "The distribution of planets as a function of stellar effective temperature") 
 ```
 
-    ## `stat_bin()` using `bins = 30`. Pick better
-    ## value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick
+    ## better value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-172-1.png)<!-- -->
 
 ``` r
 orbPerEccen <- exoplanetData 
@@ -611,15 +666,23 @@ exoDiscoveryScatter <- ggplot(orbPerEccen, aes(x = log(pl_orbper), y = pl_orbecc
 exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha = 0.6, position = "jitter")
 ```
 
-    ## Warning: Removed 552 rows containing missing values
-    ## (geom_point).
+    ## Warning: Removed 552 rows containing missing
+    ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-173-1.png)<!-- -->
 
 ## References
 
 <div id="refs" class="references csl-bib-body hanging-indent"
 line-spacing="2">
+
+<div id="ref-doi:10.1080/23746149.2019.1630316" class="csl-entry">
+
+Hoolst, T. V., Noack, L., & Rivoldini, A. (2019). Exoplanet interiors
+and habitability. *Advances in Physics: X*, *4*(1), 1630316.
+<https://doi.org/10.1080/23746149.2019.1630316>
+
+</div>
 
 <div id="ref-Kopparapu_2014" class="csl-entry">
 

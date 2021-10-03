@@ -19,6 +19,7 @@ library(httr)
 library(jsonlite)
 library(DT)
 library(latex2exp)
+library(ggrepel)
 ```
 
 ## Package requirements
@@ -29,7 +30,8 @@ To re-create this vignette in R, users are required to install
 * **[httr](https://httr.r-lib.org/)** - supplies the `GET()` function to programmatically retrieve content from NASA Exoplanet Archive's [TAP service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples). 
 * **[jsonlite](https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html)** - supplies the `fromJSON()` function to simplify JSON content into an atomic vector.
 * **[DT](https://rstudio.github.io/DT/)** - suplies the `datatables()` function with "filtering, pagination, sorting, and many other features" in the tables". 
-* **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/).   
+* **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/). 
+* **[ggrepel](https://ggrepel.slowkow.com/)** - eliminate overlapping text labels in the `ggplot2` exoplanet mass-radius diagram.
 
 ## Custom functions
 
@@ -49,7 +51,7 @@ This custom function programmatically retrieves data from the [NASA Exoplanet Ar
 
 annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, endYear = as.integer(format(Sys.Date(), "%Y")), controversialFlag = 0){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
   # Provide string to httr GET function
   apiCall <- GET(urlString)
   # Convert JSON content to data frame, rename columns
@@ -281,10 +283,54 @@ knitr::kable(discoveriesByMethod,
 
 Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed transiting their host star. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum.   
 
+Additionally, planets with radii in the range of $0.1-5 R\oplus$ comprise more than 60% of the data set. A second cluster of radii in the range $10-15 R\oplus$ comprise an additional 20%. 
+
 ```{r , echo=TRUE, eval=TRUE}
-ggplot(annualDiscoveries, aes(x = discoverymethod)) + 
-  geom_bar(aes(y = (..count..)/sum(..count..)))
+radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
+radiiFreq + geom_histogram(color = "blue", fill = "red", 
+                           aes(y = (..count..)/sum(..count..)),
+                           binwidth = 2) +
+  labs(title="Distribution of planetary radii") +
+  labs(x = TeX(r'(Radius $(R\oplus$))'), 
+       y = "Frequency") +
+  geom_density()
 ```
+
+
+By combining radii with the masses of planets, we can produce a mass-radius diagram and calculate planetary densities. From this diagram, it is also apparent that planetary radii tend to increase with mass until approximately $1000 M\oplus$, at which point gravity impels even the hardiest planetary material to compress and constrains further radial growth [@doi:10.1080/23746149.2019.1630316]. 
+
+```{r , echo=TRUE, eval=TRUE}
+# New vector with temporary data
+tempMassData <- exoplanetData 
+
+# Scatter plot of masses/radii for discovered exoplanets
+# Use LaTeX to denote the standard astronomical symbol for the Earth
+tempMassScatter <- ggplot(tempMassData, aes(x = pl_bmasse, y = pl_rade))
+tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, position = "jitter") +
+  scale_color_gradientn(colours = heat.colors(5)) +
+  labs(x = TeX(r'(Planet mass $(log(M\oplus))]$))'), y = TeX(r'(Planet radius $(R\oplus)$)'),
+       title = "Planetary mass-radius diagram", col = "Equilbrium temperature (K)",
+       size = TeX(r'(Planet density $(g/cm^3)$)')) +
+  # Label planets exceeding R = 25 (Earth), eliminate overlapping labels
+  # using geom_text_repel from the ggrepel package
+  geom_text_repel(aes(label = ifelse(pl_rade >= 25, pl_name,''))) +
+  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x)))
+```
+
+
+```{r , echo=TRUE, eval=TRUE}
+# New vector with temporary data
+orbsmaxMassData <- exoplanetData 
+
+# Scatter plot of masses/radii for discovered exoplanets
+# Use LaTeX to denote the standard astronomical symbol for the Earth
+orbsmaxMassScatter <- ggplot(orbsmaxMassData, aes(x = pl_orbsmax, y = pl_bmasse))
+orbsmaxMassScatter + geom_point(alpha = 0.6, position = "jitter") +
+  scale_x_log10() +
+  scale_y_log10()
+```
+
 
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -353,19 +399,7 @@ head(listHabitablePlanets)
 ```
 
 
-```{r , echo=TRUE, eval=TRUE}
-# New vector with temporary data
-tempMassData <- exoplanetData 
 
-# Scatter plot of masses/radii for discovered exoplanets
-# Use LaTeX to denote the standard astronomical symbol for the Earth
-tempMassScatter <- ggplot(tempMassData, aes(x = log10(pl_bmasse), y = pl_rade))
-tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_bmasse), alpha = 0.6, position = "jitter") +
-  scale_color_gradientn(colours = heat.colors(5)) +
-  labs(x = TeX(r'(Mass $(log(M\oplus))]$))'), y = TeX(r'(Radius $(R\oplus)$)'),
-       title = "Comparison of radius and logarithmic mass amongst known exoplanets", col = "Equilbrium temperature (K)",
-       size = TeX(r'(Planet Mass $(M\oplus)$)'))
-```
 
 ```{r , echo=TRUE, eval=TRUE}
 planetClusters <- exoplanetData
