@@ -2,7 +2,7 @@
 title: "NASA API Vignette"
 always_allow_html: true
 output: github_document
-#bibliography: references.bib 
+bibliography: references.bib 
 ---
 
 ```{r setup, include=FALSE}
@@ -208,14 +208,6 @@ summary(exoData$pl_rade)
 summary(exoData$pl_orbeccen)
 ```
 
-
-
-
-
-
-
-
-
 ```{r , echo=TRUE, eval=TRUE}
 # Masses, radii, eccentricities, and orbit semi-major axes
 densityOrbtialProp <- annualExoDiscoveries() 
@@ -250,6 +242,12 @@ metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), a
        subtitle = "Grouped by discovery method") 
 ```
 
+The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
+
+1. The planet orbits an F, G, K, or M star.
+2. The planet orbits within the optimistic (aka empirical) habitable zone defined by Kopparapu et al. (2014) and corrected for eccentric orbits by Méndez & Rivera-Valentín (2017).
+3. The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses.
+
 We can calculate the maxima and minima for habitable zones and flux using formulae provided by Kopparapu et al. [@Kopparapu_2014]. 
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -265,23 +263,6 @@ listHabitablePlanets <- habitableExoFinder(testData, minTemp = 181, maxTemp = 27
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
 listHabitablePlanets
 ```
-
-
-
-The Planetary Habitability Laboratory outlines its [general habitability criteria](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) as follows:
-
-1. The planet orbits an F, G, K, or M star.
-2. The planet orbits within the optimistic (aka empirical) habitable zone defined by Kopparapu et al. (2014) and corrected for eccentric orbits by Méndez & Rivera-Valentín (2017).
-3. The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses.
-
-```{r , echo=TRUE, eval=TRUE}
-exoDiscoveryHisto <- ggplot(discoveryYrMthd, aes(x = st_teff))
-exoDiscoveryHisto + geom_histogram() +
-  labs(x = "Stellar Effective Temperature [K]", y = "Count",
-       title = "The distribution of planets as a function of stellar effective temperature") 
-```
-
-
 
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -321,12 +302,9 @@ for(i in 1:length(metallicityData$pl_bmassj)){
     metallicityData$category[i] <- "Super-massive"
   }
 }
-  
-metallicityData
-  
 
 metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
-metallicityHisto + geom_histogram(aes(fill = metallicityData$category)) +
+metallicityHisto + geom_histogram(aes(fill = category)) +
   labs(x = "Stellar Effective Temperature [K]", y = "Count",
        title = "The distribution of planets as a function of stellar effective temperature") 
 ```
