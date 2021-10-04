@@ -9,7 +9,7 @@ NASA API Vignette
     -   [habitableExoFinder()](#habitableexofinder)
 -   [Exploratory Data Analysis](#exploratory-data-analysis)
     -   [Basic summaries](#basic-summaries)
-    -   [Habitability summaries](#habitability-summaries)
+    -   [Exoplanet habitability](#exoplanet-habitability)
 -   [References](#references)
 
 ## Package requirements
@@ -65,10 +65,10 @@ values for this function are:
     status “has been questioned in the published literature.”
 
 ``` r
-# Retrieve exoplanet names, discovery year, and discovery method.
-# Defaults start in the year 1989 (earliest year in the pscomppars table)
-# and end in the current calendar year: format(Sys.Date(), "%Y").
-
+# Retrieve exoplanet names, discovery year, discovery method and its various other
+# parameters (and those of its star).
+# The default search begins in the year 1989 (earliest year in the pscomppars table)
+# and ends in the current calendar year: format(Sys.Date(), "%Y").
 annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, endYear = as.integer(format(Sys.Date(), "%Y")), controversialFlag = 0){
   # Create URL string
   urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
@@ -118,10 +118,9 @@ The output of this function is a list with four numeric parameters -
 # https://iopscience.iop.org/article/10.1088/2041-8205/787/2/L29
 # Re-factored to R from John Armstrong's Python code at
 # https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
-
 calculateHZ <- function(tempEff, luminosityRatio){
   
-  # Initiate vectors
+  # Initiate empty vectors
   s_eff <- vector()
   distanceFromStar <- vector()
   
@@ -133,6 +132,7 @@ calculateHZ <- function(tempEff, luminosityRatio){
   fivemeRunaway <- vector()
   tenthmeRunaway <- vector()
   
+  # Populate variables with coefficients from research paper by Kopparapu et al. 
   s_eff_sun  = c(1.776, 1.107, 0.356, 0.320, 1.188, 0.99)
   a <- c(2.136e-4, 1.332e-4, 6.171e-5, 5.547e-5, 1.433e-4, 1.209e-4)
   b <- c(2.533e-8, 1.580e-8, 1.698e-9, 1.526e-9, 1.707e-8, 1.404e-8)
@@ -141,22 +141,31 @@ calculateHZ <- function(tempEff, luminosityRatio){
   
   t_star <- tempEff-5780
   
+  
   for (i in 1:length(a)){
+    # Calculate effective solar flux (s_eff) using formula
+    # from research paper by Kopparapu et al.
     s_eff[i] <- s_eff_sun[i] + 
       a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
     
+    # Calculate corresponding inner/outer habitability zone distances
     distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
     
     optimisticInnerDist <- distanceFromStar[1]
     optimisticOuterDist <- distanceFromStar[4]
     
+    # Calculate effective solar flux incident on the planet
+    optimisticInnerFlux <- s_eff[1]
+    optimisticOuterFlux <- s_eff[4]
+    
   }
-  
-  optimisticInnerDist <- distanceFromStar[1]
-  optimisticOuterDist <- distanceFromStar[4]
-  
-  optimisticInnerFlux <- s_eff[1]
-  optimisticOuterFlux <- s_eff[4]
+  # 
+  # optimisticInnerDist <- distanceFromStar[1]
+  # optimisticOuterDist <- distanceFromStar[4]
+  # 
+  # # Calculate effective solar flux incident on the planet
+  # optimisticInnerFlux <- s_eff[1]
+  # optimisticOuterFlux <- s_eff[4]
   
   return(list(optimisticInnerDist = optimisticInnerDist, 
               optimisticOuterDist = optimisticOuterDist, 
@@ -184,8 +193,14 @@ following default parameters:
 These default column names are based on the variables in the [Planetary
 Systems Composite Parameters
 (PSCompPars)](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
-table. `luminosityRatioCol` is calculated and appended to each data
-frame that stems from the `annualExoDiscoveries()` function.
+table. The *spectralClass* column uses the `substr()` function to
+distill the complete classification of a star into its main class (O, B,
+A, etc.).
+
+Habitability zone distances and incident flux are calculated only for
+planets with a mass of 10*M*⊕ or less. This is the hypothetical
+threshold for “planets composed substantially of volatiles” such as
+*H*<sub>2</sub>*O* and *N**H*<sub>3</sub> (Kuchner, 2003).
 
 ``` r
 # Customer function to calculate values for 
@@ -242,16 +257,6 @@ This function produces a data frame of potentially habitable exoplanets
 from a set of general habitability criteria, many of which are inspired
 by the University of Puerto Rico’s [Planetary Habitability
 Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods).
-These include the conditions that
-
-1.  The planet orbits an F, G, K, or M star (this is accommodated using
-    the function `filter(spectralClass %in% c("F", "G", "K", "M")`).
-2.  The planet orbits within the optimistic habitable zone defined by
-    Kopparapu et al. (2014). Individual habitable zone values are
-    calculated using the `calculateHZ()` function and extended to larger
-    data sets via the `hzFluxCalculator()` function.
-3.  The planet has a radius between 0.5 to 2.5 Earth radii or a minimum
-    mass between 0.1 to 10 Earth masses.
 
 These parameters can be tuned using arguments from published research.
 For simplicity, the default values are:
@@ -328,7 +333,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Sun Oct 3 20:09:24 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 12:25:04 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -356,7 +361,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -441,7 +446,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-28-1.png)<!-- --> Direct
+![](README_files/figure-gfm/unnamed-chunk-81-1.png)<!-- --> Direct
 imaging also favors young stars, which tend to be “self-luminous due to
 ongoing contraction and…accretion” (service), 2016). The combination of
 large semi-major axes and a luminous nature is generally attributed to
@@ -474,11 +479,99 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
 
-Giants aside, planets with radii in the range of 0.1 − 5*R*⊕ comprise
-more than 60% of the data set. A second cluster of radii in the range
-10 − 15*R*⊕ comprise an additional 20%.
+``` r
+metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
+                                                      !is.na(pl_bmassj))
+metallicityData %>% mutate(giantPlFlag = NA)
+```
+
+    ## # A tibble: 3,465 × 21
+    ##    pl_name      disc_year discoverymethod
+    ##    <chr>            <int> <chr>          
+    ##  1 Kepler-276 c      2013 Transit        
+    ##  2 Kepler-829 b      2016 Transit        
+    ##  3 K2-283 b          2018 Transit        
+    ##  4 Kepler-477 b      2016 Transit        
+    ##  5 HAT-P-15 b        2010 Transit        
+    ##  6 HD 149143 b       2005 Radial Velocity
+    ##  7 HD 210702 b       2007 Radial Velocity
+    ##  8 HIP 12961 b       2010 Radial Velocity
+    ##  9 XO-5 b            2008 Transit        
+    ## 10 HD 5608 b         2012 Radial Velocity
+    ## # … with 3,455 more rows, and 18 more
+    ## #   variables: pl_orbper <dbl>,
+    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
+    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
+    ## #   pl_eqt <dbl>, pl_dens <dbl>,
+    ## #   st_spectype <chr>, st_teff <dbl>,
+    ## #   st_lum <dbl>, …
+
+``` r
+for (i in 1:length(metallicityData$pl_name)){
+  if (metallicityData$pl_bmassj[i] >= 1){
+    metallicityData$giantPlFlag[i] = "Giant"
+  } else if(metallicityData$pl_bmassj[i] < 1){
+    metallicityData$giantPlFlag[i] = "Sub-giant"
+  }
+  else {
+    metallicityData$giantPlFlag[i] = NA
+  }
+}
+metallicityData
+```
+
+    ## # A tibble: 3,465 × 21
+    ##    pl_name      disc_year discoverymethod
+    ##    <chr>            <int> <chr>          
+    ##  1 Kepler-276 c      2013 Transit        
+    ##  2 Kepler-829 b      2016 Transit        
+    ##  3 K2-283 b          2018 Transit        
+    ##  4 Kepler-477 b      2016 Transit        
+    ##  5 HAT-P-15 b        2010 Transit        
+    ##  6 HD 149143 b       2005 Radial Velocity
+    ##  7 HD 210702 b       2007 Radial Velocity
+    ##  8 HIP 12961 b       2010 Radial Velocity
+    ##  9 XO-5 b            2008 Transit        
+    ## 10 HD 5608 b         2012 Radial Velocity
+    ## # … with 3,455 more rows, and 18 more
+    ## #   variables: pl_orbper <dbl>,
+    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
+    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
+    ## #   pl_eqt <dbl>, pl_dens <dbl>,
+    ## #   st_spectype <chr>, st_teff <dbl>,
+    ## #   st_lum <dbl>, …
+
+``` r
+metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
+metallicityHisto + geom_histogram(aes(y = ..density.., 
+                                      fill = giantPlFlag), 
+                                  bins = 50, color = "red") +
+  labs(x = "Stellar metallicity [Fe/H]",
+       title = "The distribution of metallicity in giant and sub-giant planets",
+       fill = "") + 
+  geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
+```
+
+![](README_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
+
+``` r
+metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
+  summarise(meanMetallicity = mean(st_met), medianMetallicity = median(st_met))
+knitr::kable(metallicityAverages, 
+             col.names = c("Classification", "Mean stellar metallicity [dex]",
+                           "Median stellar metallicity [dex]"))
+```
+
+| Classification | Mean stellar metallicity \[dex\] | Median stellar metallicity \[dex\] |
+|:---------------|---------------------------------:|-----------------------------------:|
+| Giant          |                        0.0524745 |                               0.08 |
+| Sub-giant      |                        0.0069631 |                               0.01 |
+
+Planets with radii in the radii in the range 10 − 15*R*⊕ comprise 20% of
+our data set. The bulk of the data consists of planets in the range of
+0.1 − 5*R*⊕, which makes up more than 60% of observed planets.
 
 ``` r
 radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
@@ -497,7 +590,7 @@ radiiFreq + geom_histogram(color = "blue", fill = "red",
     ## Warning: Removed 9 rows containing
     ## non-finite values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-85-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -531,62 +624,103 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 26 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-86-1.png)<!-- -->
 
-### Habitability summaries
+### Exoplanet habitability
+
+Among the 4501 exoplanets in the NASA Exoplanet Archive, which have the
+potential to harbor life? The [Planetary Habitability
+Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods)
+(PHL) attempts to answer this by narrowing conditions such that
+
+1.  “The planet orbits an F, G, K, or M star.”
+2.  “The planet orbits within the optimistic habitable zone defined by
+    Kopparapu et al. (2014).”
+3.  “The planet has a radius between 0.5 to 2.5 Earth radii or a minimum
+    mass between 0.1 to 10 Earth masses.” Moreover, as defined by Zsom
+    et al., “an exoplanet is habitable if liquid water, a crucial
+    ingredient for life as we know it, is present on its surface, and if
+    the surface temperature and pressure are such that complex organic
+    molecules are stable” (Zsom et al., 2013). This this end, we can use
+    criteria from the PHL and planetary equilibrium temperatures to
+    compile our own list of potentially habitable exoplanets. We can
+    then compare this list against one compiled by the PHL [Habitable
+    Planets
+    Catalog](http://phl.upr.edu/projects/habitable-exoplanets-catalog).
+
+First, we calculate the maxima and minima for habitable zone distances
+and solar flux using formulae provided by Kopparapu et al. (Kopparapu et
+al., 2014). The `hzFluxCalculator()` function takes an existing data
+frame (such as the one produced by the `annualExoDiscoveries()`
+function) and appends to it the columns *innerHZ*, *outerHZ*,
+*innerFlux*, and *outerFlux*. Individual habitable zone values are
+calculated using the `calculateHZ()` function and extended to larger
+data sets via the `hzFluxCalculator()` function.
 
 ``` r
-metallicityData <- exoplanetData
-metallicityData <- metallicityData %>% select(st_metratio, st_met, discoverymethod, pl_bmassj, pl_bmasse, pl_orbper) %>% 
-  filter(st_metratio == "[Fe/H]" & 
-           (discoverymethod %in% c("Transit", "Radial Velocity", "Microlensing")))
-
-metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
-metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), adjust = 0.5, alpha = 0.5) +
-  labs(x = "Stellar metallicity [Fe/H]", y = "Count",
-       title = "The distribution of exo planets as a function of stellar metallicity",
-       subtitle = "Grouped by discovery method") 
-```
-
-    ## Warning: Ignoring unknown parameters:
-    ## adjust
-
-    ## Warning: Use of
-    ## `metallicityData$discoverymethod` is
-    ## discouraged. Use `discoverymethod`
-    ## instead.
-
-    ## `stat_bin()` using `bins = 30`.
-    ## Pick better value with `binwidth`.
-
-![](README_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
-
-We can calculate the maxima and minima for habitable zones and flux
-using formulae provided by Kopparapu et al. (Kopparapu et al., 2014).
-
-``` r
-# Grab up-to-date data from API
+# Exoplanet data from the NASA Exoplanet Archive
 planetData <- exoplanetData
 
-# Calculate maxima/minima for habitabilize zone and flux for each exoplanet
-hzFluxData <- hzFluxCalculator(planetData)
+# Calculate maxima/minima for habitabilize zone distances 
+# and the solar flux incident on each exoplanet
+planetData <- hzFluxCalculator(planetData)
 
+head(planetData, n = 10)
+```
+
+    ## # A tibble: 10 × 25
+    ##    pl_name   disc_year discoverymethod
+    ##    <chr>         <int> <chr>          
+    ##  1 OGLE-201…      2020 Microlensing   
+    ##  2 GJ 480 b       2020 Radial Velocity
+    ##  3 Kepler-2…      2013 Transit        
+    ##  4 Kepler-8…      2016 Transit        
+    ##  5 K2-283 b       2018 Transit        
+    ##  6 Kepler-4…      2016 Transit        
+    ##  7 HAT-P-15…      2010 Transit        
+    ##  8 HD 14914…      2005 Radial Velocity
+    ##  9 HD 21070…      2007 Radial Velocity
+    ## 10 HIP 1296…      2010 Radial Velocity
+    ## # … with 22 more variables:
+    ## #   pl_orbper <dbl>, pl_rade <dbl>,
+    ## #   pl_bmasse <dbl>, pl_radj <dbl>,
+    ## #   pl_bmassj <dbl>, pl_eqt <dbl>,
+    ## #   pl_dens <dbl>, st_spectype <chr>,
+    ## #   st_teff <dbl>, st_lum <dbl>,
+    ## #   pl_controv_flag <int>, …
+
+Next, we supply this data frame to the `habitableExoFinder()` function
+alongside our criteria for habitability. In the code chunk below, we use
+effective temperatures in the range of 181 − 279 Kelvin and planet radii
+in the range of 2.5 − 10*R*⊕.
+
+``` r
 # List habitable planets using "optimistic" parameters from
 # Planetary Habitability Laboratory
 listHabitablePlanets <- habitableExoFinder(hzFluxData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
-head(listHabitablePlanets)
+listHabitablePlanets
 ```
 
-    ## # A tibble: 6 × 11
-    ##   pl_name     pl_eqt spectralClass
-    ##   <chr>        <dbl> <chr>        
-    ## 1 GJ 180 c       NA  M            
-    ## 2 GJ 433 d       NA  M            
-    ## 3 GJ 832 c       NA  M            
-    ## 4 Wolf 1061 c    NA  M            
-    ## 5 GJ 682 b       NA  M            
-    ## 6 K2-288 B b    226. M            
+    ## # A tibble: 16 × 11
+    ##    pl_name            pl_eqt spectralClass
+    ##    <chr>               <dbl> <chr>        
+    ##  1 GJ 180 c              NA  M            
+    ##  2 GJ 433 d              NA  M            
+    ##  3 GJ 832 c              NA  M            
+    ##  4 Wolf 1061 c           NA  M            
+    ##  5 GJ 682 b              NA  M            
+    ##  6 K2-288 B b           226. M            
+    ##  7 Proxima Cen b        234  M            
+    ##  8 GJ 273 b              NA  M            
+    ##  9 GJ 163 c              NA  M            
+    ## 10 GJ 667 C c            NA  M            
+    ## 11 GJ 1061 c             NA  M            
+    ## 12 Teegarden's Star c    NA  M            
+    ## 13 TOI-700 d            269. M            
+    ## 14 GJ 1061 d             NA  M            
+    ## 15 Teegarden's Star b    NA  M            
+    ## 16 GJ 357 d             220. M            
     ## # … with 8 more variables:
     ## #   pl_bmasse <dbl>, pl_rade <dbl>,
     ## #   pl_orbeccen <dbl>,
@@ -594,70 +728,9 @@ head(listHabitablePlanets)
     ## #   outerHZ <dbl>, innerFlux <dbl>,
     ## #   outerFlux <dbl>
 
-``` r
-planetClusters <- exoplanetData
-planetClusters <- planetClusters %>% select(pl_bmasse, pl_bmassj) %>% filter()
-```
-
-``` r
-metallicityData <- exoplanetData 
-metallicityData <- metallicityData %>% select(st_metratio, st_met, pl_bmassj, pl_bmasse, pl_orbper) %>% 
-  filter(st_metratio == "[Fe/H]" & !(is.na(pl_bmassj)) & (pl_bmassj >= 0.6))
-
-metallicityData %>% mutate(category = NA)
-```
-
-    ## # A tibble: 849 × 6
-    ##    st_metratio st_met pl_bmassj
-    ##    <chr>        <dbl>     <dbl>
-    ##  1 [Fe/H]        0.22     1.94 
-    ##  2 [Fe/H]        0.29     1.33 
-    ##  3 [Fe/H]        0.04     1.81 
-    ##  4 [Fe/H]        0.05     1.19 
-    ##  5 [Fe/H]        0.14     1.68 
-    ##  6 [Fe/H]        0.41     3.74 
-    ##  7 [Fe/H]        0.18     0.899
-    ##  8 [Fe/H]       -0.46     3.88 
-    ##  9 [Fe/H]       -0.09     7.49 
-    ## 10 [Fe/H]       -0.03     1.99 
-    ## # … with 839 more rows, and 3 more
-    ## #   variables: pl_bmasse <dbl>,
-    ## #   pl_orbper <dbl>, category <lgl>
-
-``` r
-for(i in 1:length(metallicityData$pl_bmassj)){
-  
-  if(metallicityData$pl_bmassj[i] <= 0.9 & metallicityData$pl_bmassj[i] >= 0.6){
-    metallicityData$category[i] <- "Sub-Jupiter"
-  } else if(metallicityData$pl_bmassj[i] <= 4) {
-    metallicityData$category[i] <- "Jupiter-mass"
-  } else {
-    metallicityData$category[i] <- "Super-massive"
-  }
-}
-
-metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
-metallicityHisto + geom_histogram(aes(fill = category)) +
-  labs(x = "Stellar Effective Temperature [K]", y = "Count",
-       title = "The distribution of planets as a function of stellar effective temperature") 
-```
-
-    ## `stat_bin()` using `bins = 30`.
-    ## Pick better value with `binwidth`.
-
-![](README_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
-
-``` r
-orbPerEccen <- exoplanetData 
-
-exoDiscoveryScatter <- ggplot(orbPerEccen, aes(x = log(pl_orbper), y = pl_orbeccen))
-exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha = 0.6, position = "jitter")
-```
-
-    ## Warning: Removed 552 rows containing missing
-    ## values (geom_point).
-
-![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
+Our combination of habitable zone distances, incident flux, effective
+temperatures, planet masses, and planet radii yield 16 potentially
+habitable exoplanets.
 
 ## References
 
@@ -681,12 +754,28 @@ Journal*, *787*(2), L29. <https://doi.org/10.1088/2041-8205/787/2/l29>
 
 </div>
 
+<div id="ref-pub.1058671435" class="csl-entry">
+
+Kuchner, M. J. (2003). Volatile-rich earth-mass planets in the habitable
+zone. *The Astrophysical Journal*, *596*(1), l105–l108.
+<https://doi.org/10.1086/378397>
+
+</div>
+
 <div id="ref-cite-key" class="csl-entry">
 
 service), S. (Online. (2016). *Methods of detecting exoplanets 1st
 advanced school on exoplanetary science* (V. Bozza, L. Mancini, & A.
 Sozzetti, Eds.). Cham : Springer International Publishing : Imprint:
 Springer, 2016. <https://catalog.lib.ncsu.edu/catalog/NCSU3603337>
+
+</div>
+
+<div id="ref-pub.1021397281" class="csl-entry">
+
+Zsom, A., Seager, S., Wit, J. de, & Stamenković, V. (2013). TOWARD THE
+MINIMUM INNER EDGE DISTANCE OF THE HABITABLE ZONE. *The Astrophysical
+Journal*, *778*(2), 109. <https://doi.org/10.1088/0004-637x/778/2/109>
 
 </div>
 
