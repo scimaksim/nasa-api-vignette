@@ -90,10 +90,10 @@ associated stellar flux boundaries for a star of effective temperature
 `tempEff` and a stellar luminosity `luminosityRatio`. The calculations
 are based on formulae defined by Kopparapu et al., whereby the effective
 solar flux *S*<sub>*e**f**f*</sub> is defined as
-*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>\*</sub> + *b**T*<sub>\*</sub><sup>2</sup> + *c**T*<sub>\*</sub><sup>3</sup> + *d**T*<sub>\*</sub><sup>4</sup>
+*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>*s**t**a**r*</sub> + *b**T*<sub>*s**t**a**r*</sub><sup>2</sup> + *c**T*<sub>*s**t**a**r*</sub><sup>3</sup> + *d**T*<sub>*s**t**a**r*</sub><sup>4</sup>
 and the corresponding habiatability zone distances, *d*, are defined as
-$d = (\\frac{L/L \\odot}{S\_{eff}})^{0.5}$ AU (Kopparapu et al., 2014).
-The required parameters for this function are:
+*d* = (*L*/*L* ⊙ )/(*S*<sub>*e**f**f*</sub>)<sup>0.5</sup> AU (Kopparapu
+et al., 2014). The required parameters for this function are:
 
 -   `tempEff` - the effective temperature of a star.
     *T*<sub>*e**f**f*</sub> is defined as the difference between
@@ -333,7 +333,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 12:25:04 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 12:28:51 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -361,7 +361,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-78-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -446,7 +446,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-81-1.png)<!-- --> Direct
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- --> Direct
 imaging also favors young stars, which tend to be “self-luminous due to
 ongoing contraction and…accretion” (service), 2016). The combination of
 large semi-major axes and a luminous nature is generally attributed to
@@ -479,7 +479,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-82-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
@@ -554,7 +554,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-83-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ``` r
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
@@ -590,7 +590,7 @@ radiiFreq + geom_histogram(color = "blue", fill = "red",
     ## Warning: Removed 9 rows containing
     ## non-finite values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-85-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -624,7 +624,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 26 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-86-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ### Exoplanet habitability
 
