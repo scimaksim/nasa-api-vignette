@@ -328,7 +328,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Sun Oct 3 19:02:49 2021, the NASA Exoplanet Archive’s [Planetary
+As of Sun Oct 3 20:09:24 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -356,7 +356,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-34-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -367,8 +367,7 @@ observations for each discovery method.
 discoveriesByMethod <- table(annualDiscoveries$discoverymethod)
 
 # Display as data frame for aesthetics
-knitr::kable(discoveriesByMethod, 
-             caption = "The number of exoplanet discoveries by method.",
+knitr::kable(discoveriesByMethod,
              col.names = c("Discovery method", "Frequency"))
 ```
 
@@ -385,8 +384,6 @@ knitr::kable(discoveriesByMethod,
 | Radial Velocity               |       871 |
 | Transit                       |      3412 |
 | Transit Timing Variations     |        22 |
-
-The number of exoplanet discoveries by method.
 
 Of the known 4501 exoplanets, 75.8% were observed while transiting their
 host star and temporarily reducing its brightness. Another 19.4% were
@@ -410,33 +407,48 @@ extendedDiscoveryProp <- extendedDiscoveryProp %>%
 # planets observed by these methods
 discoverySummaries <- extendedDiscoveryProp %>% group_by(discoverymethod) %>%
   summarise(meanSMA = mean(pl_orbsmax), medianSMA = median(pl_orbsmax))
-discoverySummaries
+knitr::kable(discoverySummaries, 
+             col.names = c("Discovery method", "Mean SMA (AU)",
+                           "Median SMA (AU)"))
 ```
 
-    ## # A tibble: 4 × 3
-    ##   discoverymethod meanSMA medianSMA
-    ##   <chr>             <dbl>     <dbl>
-    ## 1 Imaging         582.     162     
-    ## 2 Microlensing      2.70     2.42  
-    ## 3 Radial Velocity   1.61     1.02  
-    ## 4 Transit           0.129    0.0791
+| Discovery method | Mean SMA (AU) | Median SMA (AU) |
+|:-----------------|--------------:|----------------:|
+| Imaging          |   582.2795918 |       162.00000 |
+| Microlensing     |     2.6991217 |         2.42000 |
+| Radial Velocity  |     1.6054370 |         1.02500 |
+| Transit          |     0.1290528 |         0.07908 |
 
 Direct imaging, on the other hand, requires planets to be relatively far
 from a star in order for the stellar brightness not to overwhelm the
 planetary dimness. In this data set, the median distance for a planet
-that was directly observed is 162 AU. Direct imaging also favors young
-stars, which tend to be “self-luminous due to ongoing contraction
-and…accretion” (service), 2016). The bocplot below shows the
+that was directly observed is 162 AU. The boxplot below shows the
 distribution of semi-major axes for four of the most productive
 exoplanet observation methods.
 
 ``` r
-orbsmaxBoxPlot <- ggplot(extendedDiscoveryProp, aes(x = discoverymethod, y = pl_orbsmax))
+orbsmaxBoxPlot <- ggplot(extendedDiscoveryProp, 
+                         aes(x = discoverymethod, y = pl_orbsmax,
+                             fill = discoverymethod))
 orbsmaxBoxPlot + geom_boxplot() +
-  scale_y_log10() 
+  # Remove legend after coloration
+  theme(legend.position = "none") +
+  scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  labs(x = "Discovery method", y = "Orbit semi-major axis (log)",
+       title = "Distribution of semi-major axes for various discovery methods") +
+  # Add log ticks to left side
+  annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-28-1.png)<!-- --> Direct
+imaging also favors young stars, which tend to be “self-luminous due to
+ongoing contraction and…accretion” (service), 2016). The combination of
+large semi-major axes and a luminous nature is generally attributed to
+giants that match or exceed the mass of Jupiter. This is corroborated by
+the scatter plot below, whereby the bulk of directly-imaged planets have
+a mass of approximately 10*M*<sub>*J*</sub> and reside at a distance of
+10 − 10, 000*A**U* from their star.
 
 ``` r
 # New vector with temporary data
@@ -444,30 +456,27 @@ orbsmaxMassData <- exoplanetData
 
 # Scatter plot of masses/radii for discovered exoplanets
 # Use LaTeX to denote the standard astronomical symbol for the Earth
-orbsmaxMassScatter <- ggplot(orbsmaxMassData, aes(x = pl_orbsmax, y = pl_bmasse))
-orbsmaxMassScatter + geom_point(aes(col = pl_orbeccen), alpha = 0.6, position = "jitter") +
-  scale_x_log10() +
-  scale_y_log10() +
+orbsmaxMassScatter <- ggplot(extendedDiscoveryProp, aes(x = pl_orbsmax, y = pl_bmassj))
+orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod), 
+                                alpha = 0.6, position = "jitter") +
+  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+    scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))) +
   # Select color palette for eccentricity from 
   # https://rdrr.io/r/grDevices/palettes.html
   scale_color_gradientn(colours = terrain.colors(5)) +
-  labs(x = "Semi-major axis [AU]", y = TeX(r'(Planet mass $(M\oplus)$)'),
-       title = "Mass versus semi-major axis", col = "Orbit eccentricity",
-       size = TeX(r'(Planet density $(g/cm^3)$)')) +
-  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
-   labels = scales::trans_format("log10", scales::math_format(10^.x)))
+  labs(x = "Semi-major axis [AU]", y = TeX(r'(Planet mass $(M_{J})$)'),
+       title = "Planetary mass versus semi-major axis", col = "Orbit eccentricity",
+       shape = "Discovery method") 
 ```
 
-    ## Scale for 'x' is already present.
-    ## Adding another scale for 'x', which
-    ## will replace the existing scale.
-
-    ## Warning: Removed 197 rows containing missing
+    ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
-Additionally, planets with radii in the range of 0.1 − 5*R*⊕ comprise
+Giants aside, planets with radii in the range of 0.1 − 5*R*⊕ comprise
 more than 60% of the data set. A second cluster of radii in the range
 10 − 15*R*⊕ comprise an additional 20%.
 
@@ -488,7 +497,7 @@ radiiFreq + geom_histogram(color = "blue", fill = "red",
     ## Warning: Removed 9 rows containing
     ## non-finite values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -522,123 +531,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 26 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
-
-``` r
-# New vector with temporary data
-orbsmaxMassData <- exoplanetData 
-
-# Scatter plot of masses/radii for discovered exoplanets
-# Use LaTeX to denote the standard astronomical symbol for the Earth
-orbsmaxMassScatter <- ggplot(orbsmaxMassData, aes(x = pl_orbsmax, y = pl_bmasse))
-orbsmaxMassScatter + geom_point(aes(shape = discoverymethod), alpha = 0.6, position = "jitter") +
-  scale_x_log10() +
-  scale_y_log10() +
-  # Select color palette for eccentricity from 
-  # https://rdrr.io/r/grDevices/palettes.html
-  scale_color_gradientn(colours = terrain.colors(5)) +
-  labs(x = "Semi-major axis [AU]", y = TeX(r'(Planet mass $(M\oplus)$)'),
-       title = "Mass versus semi-major axis", col = "Orbit eccentricity",
-       size = TeX(r'(Planet density $(g/cm^3)$)')) +
-  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
-   labels = scales::trans_format("log10", scales::math_format(10^.x)))
-```
-
-    ## Scale for 'x' is already present.
-    ## Adding another scale for 'x', which
-    ## will replace the existing scale.
-
-    ## Warning: The shape palette can deal with a
-    ## maximum of 6 discrete values
-    ## because more than 6 becomes
-    ## difficult to discriminate; you
-    ## have 11. Consider specifying
-    ## shapes manually if you must have
-    ## them.
-
-    ## Warning: Removed 4321 rows containing
-    ## missing values (geom_point).
-
-![](README_files/figure-gfm/unnamed-chunk-41-1.png)<!-- -->
-
-``` r
-summary(annualDiscoveries$pl_bmasse)
-```
-
-    ##     Min.  1st Qu.   Median     Mean 
-    ##     0.02     3.97     8.55   415.65 
-    ##  3rd Qu.     Max.     NA's 
-    ##   167.73 45700.00       17
-
-``` r
-summary(annualDiscoveries$pl_rade)
-```
-
-    ##    Min. 1st Qu.  Median    Mean 
-    ##   0.296   1.760   2.740   5.703 
-    ## 3rd Qu.    Max.    NA's 
-    ##  11.994  33.600       9
-
-``` r
-summary(annualDiscoveries$pl_orbeccen)
-```
-
-    ##    Min. 1st Qu.  Median    Mean 
-    ##  0.0000  0.0000  0.0000  0.0697 
-    ## 3rd Qu.    Max.    NA's 
-    ##  0.0722  0.9500     533
-
-``` r
-summary(annualDiscoveries$pl_bmasse)
-```
-
-    ##     Min.  1st Qu.   Median     Mean 
-    ##     0.02     3.97     8.55   415.65 
-    ##  3rd Qu.     Max.     NA's 
-    ##   167.73 45700.00       17
-
-``` r
-summary(annualDiscoveries$pl_rade)
-```
-
-    ##    Min. 1st Qu.  Median    Mean 
-    ##   0.296   1.760   2.740   5.703 
-    ## 3rd Qu.    Max.    NA's 
-    ##  11.994  33.600       9
-
-``` r
-summary(annualDiscoveries$pl_orbeccen)
-```
-
-    ##    Min. 1st Qu.  Median    Mean 
-    ##  0.0000  0.0000  0.0000  0.0697 
-    ## 3rd Qu.    Max.    NA's 
-    ##  0.0722  0.9500     533
-
-``` r
-# Masses, radii, eccentricities, and orbit semi-major axes
-densityOrbtialProp <- exoplanetData
-densityOrbtialProp <- densityOrbtialProp %>% select(pl_orbeccen, pl_orbsmax) %>% 
-  filter(!is.na(pl_orbeccen) & !is.na(pl_orbsmax))
-
-
-orbEccenCDF <- ggplot(densityOrbtialProp, aes(x = pl_orbeccen))
-orbEccenCDF + stat_ecdf(geom = "step")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
-
-``` r
-# Scatter plot of masses/radii for discovered exoplanets
-# Use LaTeX to denote the standard astronomical symbol for the Earth
-orbsEccenScatter <- ggplot(densityOrbtialProp, aes(x = pl_orbsmax, y = pl_orbeccen, scale_x_log10()))
-orbsEccenScatter + geom_point(alpha = 0.6, position = "jitter") +
-  scale_x_log10() +
-  labs(x = TeX(r'(Mass $(log(M\oplus))]$))'), y = TeX(r'(Radius $(R\oplus)$)'),
-       title = "Comparison of radius and logarithmic mass amongst known exoplanets")
-```
-
-![](README_files/figure-gfm/unnamed-chunk-44-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ### Habitability summaries
 
@@ -666,7 +559,7 @@ metallicityHisto + geom_histogram(aes(fill = metallicityData$discoverymethod), a
     ## `stat_bin()` using `bins = 30`.
     ## Pick better value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
 
 We can calculate the maxima and minima for habitable zones and flux
 using formulae provided by Kopparapu et al. (Kopparapu et al., 2014).
@@ -752,7 +645,7 @@ metallicityHisto + geom_histogram(aes(fill = category)) +
     ## `stat_bin()` using `bins = 30`.
     ## Pick better value with `binwidth`.
 
-![](README_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 ``` r
 orbPerEccen <- exoplanetData 
@@ -764,7 +657,7 @@ exoDiscoveryScatter + geom_point(aes(size = pl_bmassj, color = pl_bmassj), alpha
     ## Warning: Removed 552 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ## References
 

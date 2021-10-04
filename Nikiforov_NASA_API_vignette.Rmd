@@ -276,8 +276,7 @@ The contingency table below summarizes the cumulative number of observations for
 discoveriesByMethod <- table(annualDiscoveries$discoverymethod)
 
 # Display as data frame for aesthetics
-knitr::kable(discoveriesByMethod, 
-             caption = "The number of exoplanet discoveries by method.",
+knitr::kable(discoveriesByMethod,
              col.names = c("Discovery method", "Frequency"))
 ```
 
@@ -298,19 +297,30 @@ extendedDiscoveryProp <- extendedDiscoveryProp %>%
 # planets observed by these methods
 discoverySummaries <- extendedDiscoveryProp %>% group_by(discoverymethod) %>%
   summarise(meanSMA = mean(pl_orbsmax), medianSMA = median(pl_orbsmax))
-discoverySummaries
+knitr::kable(discoverySummaries, 
+             col.names = c("Discovery method", "Mean SMA (AU)",
+                           "Median SMA (AU)"))
 ```
 
 
-Direct imaging, on the other hand, requires planets to be relatively far from a star in order for the stellar brightness not to overwhelm the planetary dimness. In this data set, the median distance for a planet that was directly observed is 162 AU. Direct imaging also favors young stars, which tend to be "self-luminous due to ongoing contraction and...accretion" [@cite-key]. The bocplot below shows the distribution of semi-major axes for four of the most productive exoplanet observation methods.
+Direct imaging, on the other hand, requires planets to be relatively far from a star in order for the stellar brightness not to overwhelm the planetary dimness. In this data set, the median distance for a planet that was directly observed is 162 AU. The boxplot below shows the distribution of semi-major axes for four of the most productive exoplanet observation methods.
 
 
 ```{r , echo=TRUE, eval=TRUE}
-orbsmaxBoxPlot <- ggplot(extendedDiscoveryProp, aes(x = discoverymethod, y = pl_orbsmax))
+orbsmaxBoxPlot <- ggplot(extendedDiscoveryProp, 
+                         aes(x = discoverymethod, y = pl_orbsmax,
+                             fill = discoverymethod))
 orbsmaxBoxPlot + geom_boxplot() +
-  scale_y_log10() 
+  # Remove legend after coloration
+  theme(legend.position = "none") +
+  scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+  labs(x = "Discovery method", y = "Orbit semi-major axis (log)",
+       title = "Distribution of semi-major axes for various discovery methods") +
+  # Add log ticks to left side
+  annotation_logticks(sides="l")
 ```
-
+Direct imaging also favors young stars, which tend to be "self-luminous due to ongoing contraction and...accretion" [@cite-key]. The combination of large semi-major axes and a luminous nature is generally attributed to giants that match or exceed the mass of Jupiter. This is corroborated by the scatter plot below, whereby the bulk of directly-imaged planets have a mass of approximately $10 M_{J}$ and reside at a distance of $10-10,000 AU$ from their star.  
 
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -319,21 +329,22 @@ orbsmaxMassData <- exoplanetData
 
 # Scatter plot of masses/radii for discovered exoplanets
 # Use LaTeX to denote the standard astronomical symbol for the Earth
-orbsmaxMassScatter <- ggplot(orbsmaxMassData, aes(x = pl_orbsmax, y = pl_bmasse))
-orbsmaxMassScatter + geom_point(aes(col = pl_orbeccen), alpha = 0.6, position = "jitter") +
-  scale_x_log10() +
-  scale_y_log10() +
+orbsmaxMassScatter <- ggplot(extendedDiscoveryProp, aes(x = pl_orbsmax, y = pl_bmassj))
+orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod), 
+                                alpha = 0.6, position = "jitter") +
+  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))) +
+    scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
+   labels = scales::trans_format("log10", scales::math_format(10^.x))) +
   # Select color palette for eccentricity from 
   # https://rdrr.io/r/grDevices/palettes.html
   scale_color_gradientn(colours = terrain.colors(5)) +
-  labs(x = "Semi-major axis [AU]", y = TeX(r'(Planet mass $(M\oplus)$)'),
-       title = "Mass versus semi-major axis", col = "Orbit eccentricity",
-       size = TeX(r'(Planet density $(g/cm^3)$)')) +
-  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
-   labels = scales::trans_format("log10", scales::math_format(10^.x)))
+  labs(x = "Semi-major axis [AU]", y = TeX(r'(Planet mass $(M_{J})$)'),
+       title = "Planetary mass versus semi-major axis", col = "Orbit eccentricity",
+       shape = "Discovery method") 
 ```
 
-Additionally, planets with radii in the range of $0.1-5 R\oplus$ comprise more than 60% of the data set. A second cluster of radii in the range $10-15 R\oplus$ comprise an additional 20%. 
+Giants aside, planets with radii in the range of $0.1-5 R\oplus$ comprise more than 60% of the data set. A second cluster of radii in the range $10-15 R\oplus$ comprise an additional 20%. 
 
 ```{r , echo=TRUE, eval=TRUE}
 radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
@@ -368,63 +379,6 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
    labels = scales::trans_format("log10", scales::math_format(10^.x)))
 ```
 
-```{r , echo=TRUE, eval=TRUE}
-# New vector with temporary data
-orbsmaxMassData <- exoplanetData 
-
-# Scatter plot of masses/radii for discovered exoplanets
-# Use LaTeX to denote the standard astronomical symbol for the Earth
-orbsmaxMassScatter <- ggplot(orbsmaxMassData, aes(x = pl_orbsmax, y = pl_bmasse))
-orbsmaxMassScatter + geom_point(aes(shape = discoverymethod), alpha = 0.6, position = "jitter") +
-  scale_x_log10() +
-  scale_y_log10() +
-  # Select color palette for eccentricity from 
-  # https://rdrr.io/r/grDevices/palettes.html
-  scale_color_gradientn(colours = terrain.colors(5)) +
-  labs(x = "Semi-major axis [AU]", y = TeX(r'(Planet mass $(M\oplus)$)'),
-       title = "Mass versus semi-major axis", col = "Orbit eccentricity",
-       size = TeX(r'(Planet density $(g/cm^3)$)')) +
-  scale_x_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
-   labels = scales::trans_format("log10", scales::math_format(10^.x)))
-```
-
-
-
-
-
-```{r , echo=TRUE, eval=TRUE}
-summary(annualDiscoveries$pl_bmasse)
-summary(annualDiscoveries$pl_rade)
-summary(annualDiscoveries$pl_orbeccen)
-```
-
-
-
-```{r , echo=TRUE, eval=TRUE}
-summary(annualDiscoveries$pl_bmasse)
-summary(annualDiscoveries$pl_rade)
-summary(annualDiscoveries$pl_orbeccen)
-```
-
-```{r , echo=TRUE, eval=TRUE}
-# Masses, radii, eccentricities, and orbit semi-major axes
-densityOrbtialProp <- exoplanetData
-densityOrbtialProp <- densityOrbtialProp %>% select(pl_orbeccen, pl_orbsmax) %>% 
-  filter(!is.na(pl_orbeccen) & !is.na(pl_orbsmax))
-
-
-orbEccenCDF <- ggplot(densityOrbtialProp, aes(x = pl_orbeccen))
-orbEccenCDF + stat_ecdf(geom = "step")
-
-
-# Scatter plot of masses/radii for discovered exoplanets
-# Use LaTeX to denote the standard astronomical symbol for the Earth
-orbsEccenScatter <- ggplot(densityOrbtialProp, aes(x = pl_orbsmax, y = pl_orbeccen, scale_x_log10()))
-orbsEccenScatter + geom_point(alpha = 0.6, position = "jitter") +
-  scale_x_log10() +
-  labs(x = TeX(r'(Mass $(log(M\oplus))]$))'), y = TeX(r'(Radius $(R\oplus)$)'),
-       title = "Comparison of radius and logarithmic mass amongst known exoplanets")
-```
 
 ### Habitability summaries
 
