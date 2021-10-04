@@ -4,11 +4,14 @@ NASA API Vignette
 -   [Package requirements](#package-requirements)
 -   [Custom functions](#custom-functions)
     -   [annualExoDiscoveries()](#annualexodiscoveries)
-    -   [calculateHZ](#calculatehz)
+    -   [calculateHZ()](#calculatehz)
     -   [hzFluxCalculator()](#hzfluxcalculator)
     -   [habitableExoFinder()](#habitableexofinder)
 -   [Exploratory Data Analysis](#exploratory-data-analysis)
     -   [Basic summaries](#basic-summaries)
+        -   [Annual discoveries](#annual-discoveries)
+        -   [Metallicity correlations](#metallicity-correlations)
+    -   [Mass-radius diagram](#mass-radius-diagram)
     -   [Exoplanet habitability](#exoplanet-habitability)
 -   [References](#references)
 
@@ -83,14 +86,14 @@ annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, end
 }
 ```
 
-### calculateHZ
+### calculateHZ()
 
 This function calculates exoplanetary habitable zones and their
 associated stellar flux boundaries for a star of effective temperature
 `tempEff` and a stellar luminosity `luminosityRatio`. The calculations
 are based on formulae defined by Kopparapu et al., whereby the effective
 solar flux *S*<sub>*e**f**f*</sub> is defined as
-*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>*s**t**a**r*</sub> + *b**T*<sub>*s**t**a**r*</sub><sup>2</sup> + *c**T*<sub>*s**t**a**r*</sub><sup>3</sup> + *d**T*<sub>*s**t**a**r*</sub><sup>4</sup>
+*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>⋆</sub> + *b**T*<sub>⋆</sub><sup>2</sup> + *c**T*<sub>⋆</sub><sup>3</sup> + *d**T*<sub>⋆</sub><sup>4</sup>
 and the corresponding habiatability zone distances, *d*, are defined as
 *d* = (*L*/*L* ⊙ )/(*S*<sub>*e**f**f*</sub>)<sup>0.5</sup> AU (Kopparapu
 et al., 2014). The required parameters for this function are:
@@ -102,9 +105,9 @@ et al., 2014). The required parameters for this function are:
 -   `luminosityRatio` - stellar luminosity, defined as the ratio
     $\\frac{L}{L \\odot}$. These values are calculated in the
     `annualExoDiscoveries` function by finding the inverse logarithm of
-    `st_lum` (the stellar luminosity in the **PSCompPars** table,
-    provided in units of *l**o**g*(*S**o**l**a**r*)). The values in this
-    vector are used to calculate the habiatability zone distances, *d*.
+    `st_lum` (the stellar luminosity in the **PSCompPars** table. The
+    values in this vector are used to calculate the habiatability zone
+    distances, *d*.
 
 The output of this function is a list with four numeric parameters -
 *optimisticInnerDist*, *optimisticOuterDist*, *optimisticInnerFlux*, and
@@ -313,18 +316,18 @@ exoplanetData
 ```
 
     ## # A tibble: 4,501 × 20
-    ##    pl_name   disc_year discoverymethod
-    ##    <chr>         <int> <chr>          
-    ##  1 OGLE-201…      2020 Microlensing   
-    ##  2 GJ 480 b       2020 Radial Velocity
-    ##  3 Kepler-2…      2013 Transit        
-    ##  4 Kepler-8…      2016 Transit        
-    ##  5 K2-283 b       2018 Transit        
-    ##  6 Kepler-4…      2016 Transit        
-    ##  7 HAT-P-15…      2010 Transit        
-    ##  8 HD 14914…      2005 Radial Velocity
-    ##  9 HD 21070…      2007 Radial Velocity
-    ## 10 HIP 1296…      2010 Radial Velocity
+    ##    pl_name    disc_year discoverymethod
+    ##    <chr>          <int> <chr>          
+    ##  1 OGLE-2016…      2020 Microlensing   
+    ##  2 GJ 480 b        2020 Radial Velocity
+    ##  3 Kepler-27…      2013 Transit        
+    ##  4 Kepler-82…      2016 Transit        
+    ##  5 K2-283 b        2018 Transit        
+    ##  6 Kepler-47…      2016 Transit        
+    ##  7 HAT-P-15 b      2010 Transit        
+    ##  8 HD 149143…      2005 Radial Velocity
+    ##  9 HD 210702…      2007 Radial Velocity
+    ## 10 HIP 12961…      2010 Radial Velocity
     ## # … with 4,491 more rows, and 17 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
@@ -333,7 +336,9 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 12:28:51 2021, the NASA Exoplanet Archive’s [Planetary
+#### Annual discoveries
+
+As of Mon Oct 4 16:20:18 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -352,16 +357,19 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   labs(x = "Discovery year", y = "Count",
        title = "Exoplanet discoveries over time", 
        subtitle = "Grouped by discovery method") +
-  scale_fill_discrete(name = "Discovery method") +
   theme(axis.text.x = element_text(angle = 45)) + 
   geom_text(stat="count", aes(label=..count..), 
-            vjust=0.5, hjust = -0.01, size = 2.2) +
-  theme(legend.position = c(0.67, 0.33)) +
+            vjust=0.5, hjust = -0.01, size = 2.5) +
+  theme(legend.position = c(0.65, 0.33)) +
+  # Split legend into two columns
   guides(fill=guide_legend(ncol=2)) +
+  # Change color palette for bars based on
+  # http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+  scale_fill_brewer(palette = "Spectral", name = "Discovery method") +
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -446,14 +454,16 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- --> Direct
-imaging also favors young stars, which tend to be “self-luminous due to
-ongoing contraction and…accretion” (service), 2016). The combination of
-large semi-major axes and a luminous nature is generally attributed to
-giants that match or exceed the mass of Jupiter. This is corroborated by
-the scatter plot below, whereby the bulk of directly-imaged planets have
-a mass of approximately 10*M*<sub>*J*</sub> and reside at a distance of
-10 − 10, 000*A**U* from their star.
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+
+Direct imaging also favors young stars, which tend to be “self-luminous
+due to ongoing contraction and…accretion” (service), 2016). The
+combination of large semi-major axes and a luminous nature is generally
+attributed to giants that match or exceed the mass of Jupiter. This is
+corroborated by the scatter plot below, whereby the bulk of
+directly-imaged planets have a mass of approximately 10*M*<sub>*J*</sub>
+and reside at a distance of 10-10,000 astronomical units from their
+star.
 
 ``` r
 # New vector with temporary data
@@ -479,15 +489,17 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+
+#### Metallicity correlations
 
 ``` r
 metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
-                                                      !is.na(pl_bmassj))
+                                                      !is.na(pl_rade))
 metallicityData %>% mutate(giantPlFlag = NA)
 ```
 
-    ## # A tibble: 3,465 × 21
+    ## # A tibble: 3,479 × 21
     ##    pl_name      disc_year discoverymethod
     ##    <chr>            <int> <chr>          
     ##  1 Kepler-276 c      2013 Transit        
@@ -500,7 +512,7 @@ metallicityData %>% mutate(giantPlFlag = NA)
     ##  8 HIP 12961 b       2010 Radial Velocity
     ##  9 XO-5 b            2008 Transit        
     ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,455 more rows, and 18 more
+    ## # … with 3,469 more rows, and 18 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -510,9 +522,9 @@ metallicityData %>% mutate(giantPlFlag = NA)
 
 ``` r
 for (i in 1:length(metallicityData$pl_name)){
-  if (metallicityData$pl_bmassj[i] >= 1){
+  if (metallicityData$pl_rade[i] >= 3){
     metallicityData$giantPlFlag[i] = "Giant"
-  } else if(metallicityData$pl_bmassj[i] < 1){
+  } else if(metallicityData$pl_rade[i] < 3){
     metallicityData$giantPlFlag[i] = "Sub-giant"
   }
   else {
@@ -522,7 +534,7 @@ for (i in 1:length(metallicityData$pl_name)){
 metallicityData
 ```
 
-    ## # A tibble: 3,465 × 21
+    ## # A tibble: 3,479 × 21
     ##    pl_name      disc_year discoverymethod
     ##    <chr>            <int> <chr>          
     ##  1 Kepler-276 c      2013 Transit        
@@ -535,7 +547,7 @@ metallicityData
     ##  8 HIP 12961 b       2010 Radial Velocity
     ##  9 XO-5 b            2008 Transit        
     ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,455 more rows, and 18 more
+    ## # … with 3,469 more rows, and 18 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -546,7 +558,7 @@ metallicityData
 ``` r
 metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
 metallicityHisto + geom_histogram(aes(y = ..density.., 
-                                      fill = giantPlFlag), 
+                                      fill = giantPlFlag),
                                   bins = 50, color = "red") +
   labs(x = "Stellar metallicity [Fe/H]",
        title = "The distribution of metallicity in giant and sub-giant planets",
@@ -554,7 +566,15 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+
+``` r
+metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
+  labs(title="Empirical Cumulative Density Function \n Stellar Metallicity",
+     y = "ECDF", x="[Fe/H]", color = "Planet category")
+```
+
+![](README_files/figure-gfm/unnamed-chunk-47-2.png)<!-- -->
 
 ``` r
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
@@ -566,16 +586,18 @@ knitr::kable(metallicityAverages,
 
 | Classification | Mean stellar metallicity \[dex\] | Median stellar metallicity \[dex\] |
 |:---------------|---------------------------------:|-----------------------------------:|
-| Giant          |                        0.0524745 |                               0.08 |
-| Sub-giant      |                        0.0069631 |                               0.01 |
+| Giant          |                        0.0530353 |                               0.06 |
+| Sub-giant      |                       -0.0151235 |                               0.00 |
 
-Planets with radii in the radii in the range 10 − 15*R*⊕ comprise 20% of
-our data set. The bulk of the data consists of planets in the range of
-0.1 − 5*R*⊕, which makes up more than 60% of observed planets.
+### Mass-radius diagram
+
+Planets with radii in the range 10 − 15*R*⊕ comprise 20% of our data
+set. The bulk of the remaining observations - more than 60% - consists
+of planets in the range of 0.1 − 5*R*⊕.
 
 ``` r
 radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
-radiiFreq + geom_histogram(color = "blue", fill = "red", 
+radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b", 
                            aes(y = (..count..)/sum(..count..)),
                            binwidth = 2) +
   labs(title="Distribution of planetary radii") +
@@ -584,13 +606,13 @@ radiiFreq + geom_histogram(color = "blue", fill = "red",
   geom_density()
 ```
 
-    ## Warning: Removed 9 rows containing
-    ## non-finite values (stat_bin).
+    ## Warning: Removed 9 rows containing non-finite
+    ## values (stat_bin).
 
-    ## Warning: Removed 9 rows containing
-    ## non-finite values (stat_density).
+    ## Warning: Removed 9 rows containing non-finite
+    ## values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -624,7 +646,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 26 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
 
 ### Exoplanet habitability
 
@@ -669,18 +691,18 @@ head(planetData, n = 10)
 ```
 
     ## # A tibble: 10 × 25
-    ##    pl_name   disc_year discoverymethod
-    ##    <chr>         <int> <chr>          
-    ##  1 OGLE-201…      2020 Microlensing   
-    ##  2 GJ 480 b       2020 Radial Velocity
-    ##  3 Kepler-2…      2013 Transit        
-    ##  4 Kepler-8…      2016 Transit        
-    ##  5 K2-283 b       2018 Transit        
-    ##  6 Kepler-4…      2016 Transit        
-    ##  7 HAT-P-15…      2010 Transit        
-    ##  8 HD 14914…      2005 Radial Velocity
-    ##  9 HD 21070…      2007 Radial Velocity
-    ## 10 HIP 1296…      2010 Radial Velocity
+    ##    pl_name    disc_year discoverymethod
+    ##    <chr>          <int> <chr>          
+    ##  1 OGLE-2016…      2020 Microlensing   
+    ##  2 GJ 480 b        2020 Radial Velocity
+    ##  3 Kepler-27…      2013 Transit        
+    ##  4 Kepler-82…      2016 Transit        
+    ##  5 K2-283 b        2018 Transit        
+    ##  6 Kepler-47…      2016 Transit        
+    ##  7 HAT-P-15 b      2010 Transit        
+    ##  8 HD 149143…      2005 Radial Velocity
+    ##  9 HD 210702…      2007 Radial Velocity
+    ## 10 HIP 12961…      2010 Radial Velocity
     ## # … with 22 more variables:
     ## #   pl_orbper <dbl>, pl_rade <dbl>,
     ## #   pl_bmasse <dbl>, pl_radj <dbl>,
