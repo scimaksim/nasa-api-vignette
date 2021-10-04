@@ -316,18 +316,18 @@ exoplanetData
 ```
 
     ## # A tibble: 4,501 × 20
-    ##    pl_name    disc_year discoverymethod
-    ##    <chr>          <int> <chr>          
-    ##  1 OGLE-2016…      2020 Microlensing   
-    ##  2 GJ 480 b        2020 Radial Velocity
-    ##  3 Kepler-27…      2013 Transit        
-    ##  4 Kepler-82…      2016 Transit        
-    ##  5 K2-283 b        2018 Transit        
-    ##  6 Kepler-47…      2016 Transit        
-    ##  7 HAT-P-15 b      2010 Transit        
-    ##  8 HD 149143…      2005 Radial Velocity
-    ##  9 HD 210702…      2007 Radial Velocity
-    ## 10 HIP 12961…      2010 Radial Velocity
+    ##    pl_name   disc_year discoverymethod
+    ##    <chr>         <int> <chr>          
+    ##  1 OGLE-201…      2020 Microlensing   
+    ##  2 GJ 480 b       2020 Radial Velocity
+    ##  3 Kepler-2…      2013 Transit        
+    ##  4 Kepler-8…      2016 Transit        
+    ##  5 K2-283 b       2018 Transit        
+    ##  6 Kepler-4…      2016 Transit        
+    ##  7 HAT-P-15…      2010 Transit        
+    ##  8 HD 14914…      2005 Radial Velocity
+    ##  9 HD 21070…      2007 Radial Velocity
+    ## 10 HIP 1296…      2010 Radial Velocity
     ## # … with 4,491 more rows, and 17 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
@@ -338,7 +338,7 @@ exoplanetData
 
 #### Annual discoveries
 
-As of Mon Oct 4 16:20:18 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 19:42:54 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -369,7 +369,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-42-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -454,7 +454,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -489,17 +489,29 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 #### Metallicity correlations
 
+We can observe at least one more obvious trend from the data - that of
+the “giant planet–metallicity correlation” - whereby giant planets “tend
+to appear around metal-rich stars” (Adibekyan, 2019). COonversely,
+“there is little or no dependence on metallicity for low-mass planets
+such as super-Earths” (Hasegawa & Pudritz, 2014). If we use $10 M \\opl$
+as the threshold for super-Earths and create a histogram for the
+metallicity distribution of stars in the exoplanet database, we find
+that lanets with masses of 10*M*⊕ or less are centered around stars with
+\[Fe/H\] = 0. On the other hand, giant plants (those which exceed
+10*M*⊕) exhibit a slightly right-skewed distribution with a substantial
+concentration near \[Fe/H\] = 0.13.
+
 ``` r
 metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
-                                                      !is.na(pl_rade))
+                                                      !is.na(pl_bmasse))
 metallicityData %>% mutate(giantPlFlag = NA)
 ```
 
-    ## # A tibble: 3,479 × 21
+    ## # A tibble: 3,465 × 21
     ##    pl_name      disc_year discoverymethod
     ##    <chr>            <int> <chr>          
     ##  1 Kepler-276 c      2013 Transit        
@@ -512,7 +524,7 @@ metallicityData %>% mutate(giantPlFlag = NA)
     ##  8 HIP 12961 b       2010 Radial Velocity
     ##  9 XO-5 b            2008 Transit        
     ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,469 more rows, and 18 more
+    ## # … with 3,455 more rows, and 18 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -522,9 +534,9 @@ metallicityData %>% mutate(giantPlFlag = NA)
 
 ``` r
 for (i in 1:length(metallicityData$pl_name)){
-  if (metallicityData$pl_rade[i] >= 3){
+  if (metallicityData$pl_bmasse[i] >= 10){
     metallicityData$giantPlFlag[i] = "Giant"
-  } else if(metallicityData$pl_rade[i] < 3){
+  } else if(metallicityData$pl_bmasse[i] < 10){
     metallicityData$giantPlFlag[i] = "Sub-giant"
   }
   else {
@@ -534,7 +546,7 @@ for (i in 1:length(metallicityData$pl_name)){
 metallicityData
 ```
 
-    ## # A tibble: 3,479 × 21
+    ## # A tibble: 3,465 × 21
     ##    pl_name      disc_year discoverymethod
     ##    <chr>            <int> <chr>          
     ##  1 Kepler-276 c      2013 Transit        
@@ -547,7 +559,7 @@ metallicityData
     ##  8 HIP 12961 b       2010 Radial Velocity
     ##  9 XO-5 b            2008 Transit        
     ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,469 more rows, and 18 more
+    ## # … with 3,455 more rows, and 18 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -566,7 +578,12 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-47-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+
+An empirical cumulative distribution function affirms that, while 50% of
+sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
+\[Fe/H\] = 0, 50% of giant planets (*M* &gt;  = 10*M*⊕) orbit stars with
+a metallicity of \[Fe/H\] = 0.06.
 
 ``` r
 metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
@@ -574,7 +591,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-47-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 ``` r
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
@@ -586,8 +603,8 @@ knitr::kable(metallicityAverages,
 
 | Classification | Mean stellar metallicity \[dex\] | Median stellar metallicity \[dex\] |
 |:---------------|---------------------------------:|-----------------------------------:|
-| Giant          |                        0.0530353 |                               0.06 |
-| Sub-giant      |                       -0.0151235 |                               0.00 |
+| Giant          |                        0.0508239 |                               0.06 |
+| Sub-giant      |                       -0.0131614 |                               0.00 |
 
 ### Mass-radius diagram
 
@@ -606,13 +623,13 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
   geom_density()
 ```
 
-    ## Warning: Removed 9 rows containing non-finite
-    ## values (stat_bin).
+    ## Warning: Removed 9 rows containing
+    ## non-finite values (stat_bin).
 
-    ## Warning: Removed 9 rows containing non-finite
-    ## values (stat_density).
+    ## Warning: Removed 9 rows containing
+    ## non-finite values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -646,7 +663,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 26 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-50-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 ### Exoplanet habitability
 
@@ -691,18 +708,18 @@ head(planetData, n = 10)
 ```
 
     ## # A tibble: 10 × 25
-    ##    pl_name    disc_year discoverymethod
-    ##    <chr>          <int> <chr>          
-    ##  1 OGLE-2016…      2020 Microlensing   
-    ##  2 GJ 480 b        2020 Radial Velocity
-    ##  3 Kepler-27…      2013 Transit        
-    ##  4 Kepler-82…      2016 Transit        
-    ##  5 K2-283 b        2018 Transit        
-    ##  6 Kepler-47…      2016 Transit        
-    ##  7 HAT-P-15 b      2010 Transit        
-    ##  8 HD 149143…      2005 Radial Velocity
-    ##  9 HD 210702…      2007 Radial Velocity
-    ## 10 HIP 12961…      2010 Radial Velocity
+    ##    pl_name   disc_year discoverymethod
+    ##    <chr>         <int> <chr>          
+    ##  1 OGLE-201…      2020 Microlensing   
+    ##  2 GJ 480 b       2020 Radial Velocity
+    ##  3 Kepler-2…      2013 Transit        
+    ##  4 Kepler-8…      2016 Transit        
+    ##  5 K2-283 b       2018 Transit        
+    ##  6 Kepler-4…      2016 Transit        
+    ##  7 HAT-P-15…      2010 Transit        
+    ##  8 HD 14914…      2005 Radial Velocity
+    ##  9 HD 21070…      2007 Radial Velocity
+    ## 10 HIP 1296…      2010 Radial Velocity
     ## # … with 22 more variables:
     ## #   pl_orbper <dbl>, pl_rade <dbl>,
     ## #   pl_bmasse <dbl>, pl_radj <dbl>,
@@ -758,6 +775,22 @@ habitable exoplanets.
 
 <div id="refs" class="references csl-bib-body hanging-indent"
 line-spacing="2">
+
+<div id="ref-geosciences9030105" class="csl-entry">
+
+Adibekyan, V. (2019). Heavy metal rules. I. Exoplanet incidence and
+metallicity. *Geosciences*, *9*(3).
+<https://doi.org/10.3390/geosciences9030105>
+
+</div>
+
+<div id="ref-pub.1041145028" class="csl-entry">
+
+Hasegawa, Y., & Pudritz, R. E. (2014). PLANET TRAPS AND PLANETARY CORES:
+ORIGINS OF THE PLANET-METALLICITY CORRELATION. *The Astrophysical
+Journal*, *794*(1), 25. <https://doi.org/10.1088/0004-637x/794/1/25>
+
+</div>
 
 <div id="ref-doi:10.1080/23746149.2019.1630316" class="csl-entry">
 

@@ -361,16 +361,17 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
 
 #### Metallicity correlations
 
+We can observe at least one more obvious trend from the data - that of the "giant planet–metallicity correlation" - whereby giant planets "tend to appear around metal-rich stars" [@geosciences9030105]. COonversely, "there is little or no dependence on metallicity for low-mass planets such as super-Earths" [@pub.1041145028]. If we use $10 M \opl$ as the threshold for super-Earths and create a histogram for the metallicity distribution of stars in the exoplanet database, we find that lanets with masses of $10 M \oplus$ or less are centered around stars with [Fe/H] = 0. On the other hand, giant plants (those which exceed $10 M \oplus$) exhibit a slightly right-skewed distribution with a substantial concentration near [Fe/H] = 0.13.   
 
 ```{r , echo=TRUE, eval=TRUE}
 metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
-                                                      !is.na(pl_rade))
+                                                      !is.na(pl_bmasse))
 metallicityData %>% mutate(giantPlFlag = NA)
 
 for (i in 1:length(metallicityData$pl_name)){
-  if (metallicityData$pl_rade[i] >= 3){
+  if (metallicityData$pl_bmasse[i] >= 10){
     metallicityData$giantPlFlag[i] = "Giant"
-  } else if(metallicityData$pl_rade[i] < 3){
+  } else if(metallicityData$pl_bmasse[i] < 10){
     metallicityData$giantPlFlag[i] = "Sub-giant"
   }
   else {
@@ -387,6 +388,12 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
        title = "The distribution of metallicity in giant and sub-giant planets",
        fill = "") + 
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
+```
+
+
+An empirical cumulative distribution function affirms that, while 50% of sub-giant ($M < 10 M \oplus$) planets orbit a star with a metallicity [Fe/H] = 0, 50% of giant planets ($M >= 10 M \oplus$) orbit stars with a metallicity of [Fe/H] = 0.06.
+
+```{r , echo=TRUE, eval=TRUE}
 
 metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
   labs(title="Empirical Cumulative Density Function \n Stellar Metallicity",
