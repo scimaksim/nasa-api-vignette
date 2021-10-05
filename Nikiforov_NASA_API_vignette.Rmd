@@ -428,6 +428,8 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
+# Group data by planet status (giant/sub-giant) and calculate 
+# mean/median metallicity. 
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
   summarise(meanMetallicity = mean(st_met), medianMetallicity = median(st_met))
 knitr::kable(metallicityAverages, 
