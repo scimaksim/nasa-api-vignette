@@ -83,7 +83,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
 
 ### calculateHZ()
 
-This function calculates exoplanetary habitable zones and their associated stellar flux boundaries for a star of effective temperature `tempEff` and a stellar luminosity `luminosityRatio`. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ is defined as $S_{eff}=S_{eff \odot}+aT_{\star}+bT_{\star}^{2}+cT_{\star}^{3}+dT_{\star}^{4}$ and the corresponding habiatability zone distances, $d$, are defined as $d = (L/L \odot)/(S_{eff})^{0.5}$ AU [@Kopparapu_2014]. The required parameters for this function are:
+This function calculates exoplanetary habitable zones and their associated stellar flux boundaries for a star of effective temperature `tempEff` and a stellar luminosity `luminosityRatio`. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ is defined as $S_{eff}=S_{eff \odot}+a T_{\star}+b T_{\star}^{2}+c T_{\star}^{3}+d T_{\star}^{4}$ and the corresponding habitability zone distances, $d$, are defined as $d = (L/L \odot)/(S_{eff})^{0.5}$ AU [@Kopparapu_2014]. The required parameters for this function are:
 
 * `tempEff` - the effective temperature of a star. $T_{eff}$ is defined as the difference between `tempEff` ($T_{eff}$) and 5780 K, $T_{\star} = T_{eff} - 5780$. 
 * `luminosityRatio` - stellar luminosity, defined as the ratio $L/L \odot$. These values are calculated in the `annualExoDiscoveries` function by finding the inverse logarithm of `st_lum` (the stellar luminosity in the _PSCompPars_ table. The values in this vector are used to calculate the habiatability zone distances, $d$.
