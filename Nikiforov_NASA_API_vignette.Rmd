@@ -406,7 +406,6 @@ for (i in 1:length(metallicityData$pl_name)){
     metallicityData$giantPlFlag[i] = NA
   }
 }
-metallicityData
 
 metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
 metallicityHisto + geom_histogram(aes(y = ..density.., 
@@ -482,7 +481,9 @@ Among the `r length(exoplanetCount$pl_name)` exoplanets in the NASA Exoplanet Ar
 1. "The planet orbits an F, G, K, or M star".
 2. "The planet orbits within the optimistic habitable zone defined by @Kopparapu_2014". 
 3. "The planet has a radius between 0.5 to 2.5 Earth radii or a minimum mass between 0.1 to 10 Earth masses". 
+
 Moreover, as defined by Zsom et al., "an exoplanet is habitable if liquid water, a crucial ingredient for life as we know it, is present on its surface, and if the surface temperature and pressure are such that complex organic molecules are stable" [@pub.1021397281]. This this end, we can use criteria from the PHL and planetary equilibrium temperatures to compile our own list of potentially habitable exoplanets. We can then compare this list against one compiled by the PHL [Habitable Planets Catalog](http://phl.upr.edu/projects/habitable-exoplanets-catalog). 
+
 
 First, we calculate the maxima and minima for habitable zone distances and solar flux using formulae provided by Kopparapu et al. [@Kopparapu_2014]. The `hzFluxCalculator()` function takes an existing data frame (such as the one produced by the `annualExoDiscoveries()` function) and appends to it the columns _innerHZ_, _outerHZ_, _innerFlux_, and _outerFlux_. Individual habitable zone values are calculated using the `calculateHZ()` function and extended to larger data sets via the `hzFluxCalculator()` function. 
 
@@ -504,7 +505,7 @@ Next, we supply this data frame to the `habitableExoFinder()` function alongside
 # Planetary Habitability Laboratory
 listHabitablePlanets <- habitableExoFinder(hzFluxData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
-listHabitablePlanets
+knitr::kable(listHabitablePlanets)
 ```
 
 Our combination of habitable zone distances, incident flux, effective temperatures, planet masses, and planet radii yield `r length(listHabitablePlanets$pl_name)` potentially habitable exoplanets.

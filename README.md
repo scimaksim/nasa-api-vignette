@@ -378,7 +378,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 22:43:36 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 22:48:58 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -409,7 +409,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -525,7 +525,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -560,7 +560,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -614,31 +614,7 @@ for (i in 1:length(metallicityData$pl_name)){
     metallicityData$giantPlFlag[i] = NA
   }
 }
-metallicityData
-```
 
-    ## # A tibble: 3,459 × 21
-    ##    pl_name      disc_year discoverymethod
-    ##    <chr>            <int> <chr>          
-    ##  1 Kepler-276 c      2013 Transit        
-    ##  2 Kepler-829 b      2016 Transit        
-    ##  3 K2-283 b          2018 Transit        
-    ##  4 Kepler-477 b      2016 Transit        
-    ##  5 HAT-P-15 b        2010 Transit        
-    ##  6 HD 149143 b       2005 Radial Velocity
-    ##  7 HD 210702 b       2007 Radial Velocity
-    ##  8 HIP 12961 b       2010 Radial Velocity
-    ##  9 XO-5 b            2008 Transit        
-    ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,449 more rows, and 18 more
-    ## #   variables: pl_orbper <dbl>,
-    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
-    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
-    ## #   pl_eqt <dbl>, pl_dens <dbl>,
-    ## #   st_spectype <chr>, st_teff <dbl>,
-    ## #   st_lum <dbl>, …
-
-``` r
 metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
 metallicityHisto + geom_histogram(aes(y = ..density.., 
                                       fill = giantPlFlag),
@@ -649,7 +625,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -662,7 +638,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ``` r
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
@@ -700,7 +676,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing
     ## non-finite values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -734,7 +710,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 ### Exoplanet habitability
 
@@ -747,16 +723,17 @@ Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods)
 2.  “The planet orbits within the optimistic habitable zone defined by
     Kopparapu et al. (2014).”
 3.  “The planet has a radius between 0.5 to 2.5 Earth radii or a minimum
-    mass between 0.1 to 10 Earth masses.” Moreover, as defined by Zsom
-    et al., “an exoplanet is habitable if liquid water, a crucial
-    ingredient for life as we know it, is present on its surface, and if
-    the surface temperature and pressure are such that complex organic
-    molecules are stable” (Zsom et al., 2013). This this end, we can use
-    criteria from the PHL and planetary equilibrium temperatures to
-    compile our own list of potentially habitable exoplanets. We can
-    then compare this list against one compiled by the PHL [Habitable
-    Planets
-    Catalog](http://phl.upr.edu/projects/habitable-exoplanets-catalog).
+    mass between 0.1 to 10 Earth masses.”
+
+Moreover, as defined by Zsom et al., “an exoplanet is habitable if
+liquid water, a crucial ingredient for life as we know it, is present on
+its surface, and if the surface temperature and pressure are such that
+complex organic molecules are stable” (Zsom et al., 2013). This this
+end, we can use criteria from the PHL and planetary equilibrium
+temperatures to compile our own list of potentially habitable
+exoplanets. We can then compare this list against one compiled by the
+PHL [Habitable Planets
+Catalog](http://phl.upr.edu/projects/habitable-exoplanets-catalog).
 
 First, we calculate the maxima and minima for habitable zone distances
 and solar flux using formulae provided by Kopparapu et al. (Kopparapu et
@@ -809,34 +786,27 @@ in the range of 2.5 − 10*R*⊕.
 # Planetary Habitability Laboratory
 listHabitablePlanets <- habitableExoFinder(hzFluxData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
-listHabitablePlanets
+knitr::kable(listHabitablePlanets)
 ```
 
-    ## # A tibble: 16 × 11
-    ##    pl_name            pl_eqt spectralClass
-    ##    <chr>               <dbl> <chr>        
-    ##  1 GJ 180 c              NA  M            
-    ##  2 GJ 433 d              NA  M            
-    ##  3 GJ 832 c              NA  M            
-    ##  4 Wolf 1061 c           NA  M            
-    ##  5 GJ 682 b              NA  M            
-    ##  6 K2-288 B b           226. M            
-    ##  7 Proxima Cen b        234  M            
-    ##  8 GJ 273 b              NA  M            
-    ##  9 GJ 163 c              NA  M            
-    ## 10 GJ 667 C c            NA  M            
-    ## 11 GJ 1061 c             NA  M            
-    ## 12 Teegarden's Star c    NA  M            
-    ## 13 TOI-700 d            269. M            
-    ## 14 GJ 1061 d             NA  M            
-    ## 15 Teegarden's Star b    NA  M            
-    ## 16 GJ 357 d             220. M            
-    ## # … with 8 more variables:
-    ## #   pl_bmasse <dbl>, pl_rade <dbl>,
-    ## #   pl_orbeccen <dbl>,
-    ## #   pl_orbsmax <dbl>, innerHZ <dbl>,
-    ## #   outerHZ <dbl>, innerFlux <dbl>,
-    ## #   outerFlux <dbl>
+| pl\_name           | pl\_eqt | spectralClass | pl\_bmasse | pl\_rade | pl\_orbeccen | pl\_orbsmax |   innerHZ |   outerHZ | innerFlux | outerFlux |
+|:-------------------|--------:|:--------------|-----------:|---------:|-------------:|------------:|----------:|----------:|----------:|----------:|
+| GJ 180 c           |      NA | M             |      6.400 |    2.410 |        0.090 |    0.129000 | 0.0934020 | 0.2439176 |  1.490349 | 0.2185313 |
+| GJ 433 d           |      NA | M             |      5.223 |    2.140 |        0.070 |    0.178000 | 0.1497641 | 0.3893868 |  1.493428 | 0.2209213 |
+| GJ 832 c           |      NA | M             |      5.400 |    2.180 |        0.180 |    0.163000 | 0.1319321 | 0.3428377 |  1.493823 | 0.2212192 |
+| Wolf 1061 c        |      NA | M             |      3.410 |    1.660 |        0.110 |    0.089000 | 0.0827929 | 0.2165173 |  1.489407 | 0.2177783 |
+| GJ 682 b           |      NA | M             |      4.400 |    1.930 |        0.080 |    0.080000 | 0.0367596 | 0.0975721 |  1.479991 | 0.2100624 |
+| K2-288 B b         |  226.36 | M             |      4.270 |    1.900 |           NA |    0.164000 | 0.0888174 | 0.2322835 |  1.489375 | 0.2177525 |
+| Proxima Cen b      |  234.00 | M             |      1.270 |    1.080 |        0.350 |    0.048500 | 0.0323426 | 0.0857610 |  1.480643 | 0.2105817 |
+| GJ 273 b           |      NA | M             |      2.890 |    1.510 |        0.100 |    0.091101 | 0.0767897 | 0.2004276 |  1.490712 | 0.2188190 |
+| GJ 163 c           |      NA | M             |      6.800 |    2.500 |        0.099 |    0.125400 | 0.1144725 | 0.2970570 |  1.494849 | 0.2219834 |
+| GJ 667 C c         |      NA | M             |      3.800 |    1.770 |        0.020 |    0.125000 | 0.0959303 | 0.2507763 |  1.489665 | 0.2179853 |
+| GJ 1061 c          |      NA | M             |      1.740 |    1.180 |        0.290 |    0.035000 | 0.0339003 | 0.0902913 |  1.477721 | 0.2083091 |
+| Teegarden’s Star c |      NA | M             |      1.110 |    1.040 |        0.000 |    0.044300 | 0.0222295 | 0.0593377 |  1.476180 | 0.2071754 |
+| TOI-700 d          |  268.80 | M             |      1.570 |    1.144 |        0.111 |    0.163300 | 0.1245684 | 0.3238778 |  1.493428 | 0.2209213 |
+| GJ 1061 d          |      NA | M             |      1.640 |    1.160 |        0.530 |    0.054000 | 0.0339003 | 0.0902913 |  1.477721 | 0.2083091 |
+| Teegarden’s Star b |      NA | M             |      1.050 |    1.020 |        0.000 |    0.025200 | 0.0222295 | 0.0593377 |  1.476180 | 0.2071754 |
+| GJ 357 d           |  219.60 | M             |      6.100 |    2.340 |           NA |    0.204000 | 0.1031987 | 0.2677352 |  1.495036 | 0.2221208 |
 
 Our combination of habitable zone distances, incident flux, effective
 temperatures, planet masses, and planet radii yield 16 potentially
