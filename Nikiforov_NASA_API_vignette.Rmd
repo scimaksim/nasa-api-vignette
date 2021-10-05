@@ -44,21 +44,37 @@ This custom function programmatically retrieves data from the [NASA Exoplanet Ar
 * `startYear = 1989` - the earliest listing in the PSCompPars table, attributed to the planet [HD 114762 b](https://exoplanetarchive.ipac.caltech.edu/overview/HD%20114762%20b#planet_data_HD-114762-b).  
 * `endYear = as.integer(format(Sys.Date(), "%Y"))` - the current calendar year as understood by the user's computer. 
 * `controversial = 0` - exclude planets for which the confirmation status "has been questioned in the published literature". 
+* `format = json` = return queries in JSON format. You may also request data as a comma-separated-value file (CSV). 
 
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve exoplanet names, discovery year, discovery method and its various other
 # parameters (and those of its star).
 # The default search begins in the year 1989 (earliest year in the pscomppars table)
 # and ends in the current calendar year: format(Sys.Date(), "%Y").
-annualExoDiscoveries <- function(tableName = "pscomppars", startYear = 1989, endYear = as.integer(format(Sys.Date(), "%Y")), controversialFlag = 0){
+annualExoDiscoveries <- function(tableName = "pscomppars", 
+                                 startYear = 1989, 
+                                 endYear = as.integer(format(Sys.Date(), "%Y")), 
+                                 controversialFlag = 0,
+                                 cb_flag = 0,
+                                 format = "json"){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", tableName, "+where+disc_year+between+", startYear, "+and+", endYear, "+and+pl_controv_flag+=+", controversialFlag, "&format=json")
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", 
+                      tableName, "+where+disc_year+between+", 
+                      startYear, "+and+", endYear, 
+                      "+and+pl_controv_flag+=+", controversialFlag, 
+                      "+and+cb_flag+=+", cb_flag,
+                      "&format=", format)
   # Provide string to httr GET function
   apiCall <- GET(urlString)
-  # Convert JSON content to data frame, rename columns
-  apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() %>%
-    mutate(luminosityRatio = 10^(st_lum)) 
   
+  if(format == "json"){
+    # Convert JSON content to data frame, rename columns
+    apiContent <- apiCall$content %>% rawToChar() %>% fromJSON() %>%
+      mutate(luminosityRatio = 10^(st_lum)) 
+  } else {
+    # Specify format as CSV, convert to data frame
+    apiContent <- as.data.frame(read_csv(urlString))
+  }
   # Return formatted data frame
   return(apiContent)
 }
@@ -242,19 +258,19 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 
 ## Exploratory Data Analysis
 
-### Basic summaries
+### Annual discoveries
 
 The `annualExoDiscoveries()` function retrieves the latest exoplanet data from NASA's Exoplanet Archive.  
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Retrieve latest exoplanet data
 exoplanetData <- annualExoDiscoveries()
+exoplanetData
 
 # Print a subset of observations
 exoplanetData
 ```
 
-#### Annual discoveries
 
 As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
 
@@ -293,8 +309,18 @@ knitr::kable(discoveriesByMethod,
              col.names = c("Discovery method", "Frequency"))
 ```
 
+
 Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
 
+
+```{r , echo=TRUE, eval=TRUE}
+circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1) 
+circumbinaryPlanets
+```
+
+The table above lists `r `length(binaryStarPlanets$pl_name)` planets which are thought to orbit two or more stars - the so-called "circumbinary planets" [@kepler-16]. They are presented in the table above for completeness but, to reduce the complexity of two-body problems, they are otherwise excluded by default from the `annualExoDiscoveries()` function. 
+
+### Discovery methods
 
 Each observation method excels in specific scenarios. The transit and radial velocity detection methods favor planets which orbit their star at an average distance of 0.12-1.6 AU.  
 
@@ -359,9 +385,9 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
 ```
 
 
-#### Metallicity correlations
+### Metallicity correlations
 
-We can observe at least one more obvious trend from the data - that of the "giant planet–metallicity correlation" - whereby giant planets "tend to appear around metal-rich stars" [@geosciences9030105]. COonversely, "there is little or no dependence on metallicity for low-mass planets such as super-Earths" [@pub.1041145028]. If we use $10 M \opl$ as the threshold for super-Earths and create a histogram for the metallicity distribution of stars in the exoplanet database, we find that lanets with masses of $10 M \oplus$ or less are centered around stars with [Fe/H] = 0. On the other hand, giant plants (those which exceed $10 M \oplus$) exhibit a slightly right-skewed distribution with a substantial concentration near [Fe/H] = 0.13.   
+We can observe at least one more obvious trend from the data - that of the "giant planet–metallicity correlation" - whereby giant planets "tend to appear around metal-rich stars" [@geosciences9030105]. COonversely, "there is little or no dependence on metallicity for low-mass planets such as super-Earths" [@pub.1041145028]. If we use $10 M \oplus$ as the threshold for super-Earths and create a histogram for the metallicity distribution of stars in the exoplanet database, we find that lanets with masses of $10 M \oplus$ or less are centered around stars with [Fe/H] = 0. On the other hand, giant plants (those which exceed $10 M \oplus$) exhibit a slightly right-skewed distribution with a substantial concentration near [Fe/H] = 0.13.   
 
 ```{r , echo=TRUE, eval=TRUE}
 metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
