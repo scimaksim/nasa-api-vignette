@@ -421,11 +421,10 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
 An empirical cumulative distribution function affirms that, while 50% of sub-giant ($M < 10 M \oplus$) planets orbit a star with a metallicity [Fe/H] = 0, 50% of giant planets ($M >= 10 M \oplus$) orbit stars with a metallicity of [Fe/H] = 0.06.
 
 ```{r , echo=TRUE, eval=TRUE}
-
+# Render and label metallicity ECDF 
 metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
   labs(title="Empirical Cumulative Density Function \n Stellar Metallicity",
      y = "ECDF", x="[Fe/H]", color = "Planet category")
-
 ```
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -503,7 +502,7 @@ Next, we supply this data frame to the `habitableExoFinder()` function alongside
 ```{r , echo=TRUE, eval=TRUE}
 # List habitable planets using "optimistic" parameters from
 # Planetary Habitability Laboratory
-listHabitablePlanets <- habitableExoFinder(hzFluxData, minTemp = 181, maxTemp = 279,
+listHabitablePlanets <- habitableExoFinder(planetData, minTemp = 181, maxTemp = 279,
                                            maxEarthMass = 10, maxEarthRadius = 2.5)
 knitr::kable(listHabitablePlanets)
 ```
