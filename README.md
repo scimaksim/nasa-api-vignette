@@ -378,7 +378,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 22:00:09 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 22:03:58 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
