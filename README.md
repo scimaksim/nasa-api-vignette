@@ -112,7 +112,7 @@ associated stellar flux boundaries for a star of effective temperature
 `tempEff` and a stellar luminosity `luminosityRatio`. The calculations
 are based on formulae defined by Kopparapu et al., whereby the effective
 solar flux *S*<sub>*e**f**f*</sub> is defined as
-*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a* ⋅ *T*<sub>⋆</sub> + *b* ⋅ *T*<sub>⋆</sub><sup>2</sup> + *c* ⋅ *T*<sub>⋆</sub><sup>3</sup> + *d* ⋅ *T*<sub>⋆</sub><sup>4</sup>
+*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + (*a* ⋅ *T*<sub>⋆</sub>) + (*b* ⋅ *T*<sub>⋆</sub><sup>2</sup>) + (*c* ⋅ *T*<sub>⋆</sub><sup>3</sup>) + (*d* ⋅ *T*<sub>⋆</sub><sup>4</sup>)
 and the corresponding habitability zone distances, *d*, are defined as
 *d* = (*L*/*L* ⊙ )/(*S*<sub>*e**f**f*</sub>)<sup>0.5</sup> AU (Kopparapu
 et al., 2014). The required parameters for this function are:
@@ -378,7 +378,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 22:41:04 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 22:43:36 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
