@@ -274,6 +274,7 @@ exoplanetData
 
 As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
 
+
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve latest exoplanet data
 annualDiscoveries <- exoplanetData 
@@ -310,7 +311,7 @@ knitr::kable(discoveriesByMethod,
 ```
 
 
-Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[10])/(length(exoplanetCount$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
+Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[8])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
 
 
 ```{r , echo=TRUE, eval=TRUE}
