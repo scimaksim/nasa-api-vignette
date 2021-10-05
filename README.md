@@ -124,8 +124,8 @@ et al., 2014). The required parameters for this function are:
 -   `luminosityRatio` - stellar luminosity, defined as the ratio
     *L*/*L*⊙. These values are calculated in the `annualExoDiscoveries`
     function by finding the inverse logarithm of `st_lum` (the stellar
-    luminosity in the **PSCompPars** table. The values in this vector
-    are used to calculate the habiatability zone distances, *d*.
+    luminosity in the *PSCompPars* table. The values in this vector are
+    used to calculate the habiatability zone distances, *d*.
 
 The output of this function is a list with four numeric parameters -
 *optimisticInnerDist*, *optimisticOuterDist*, *optimisticInnerFlux*, and
@@ -378,7 +378,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 21:53:30 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 21:56:42 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
