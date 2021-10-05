@@ -17,7 +17,7 @@ NASA API Vignette
 
 ## Package requirements
 
-To re-create this vignette in R, users are required to install
+To re-create this vignette in R, users are required to install:
 
 -   **[tidyverse](https://www.tidyverse.org/)** - encompasses packages
     such as `dplyr` for subsetting data and `ggplot2` for creating
@@ -47,17 +47,17 @@ To re-create this vignette in R, users are required to install
 This custom function programmatically retrieves data from the [NASA
 Exoplanet Archive’s TAP
 service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples).
-Users can specify one of two tables - Planetary Systems (**ps**) or
-Planetary Systems Composite Parameters (**pscomppars**) - as well as a
+Users can specify one of two tables - Planetary Systems (*ps*) or
+Planetary Systems Composite Parameters (*pscomppars*) - as well as a
 range for the year(s) in which planets were discovered. The default
 values for this function are:
 
 -   `tableName = "pscomppars"` - according to the [table
     definitions](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
-    for **ps** and **pscomppars**, “PSCompPars is a more filled-in
-    table, with only one row per planet, enabling a more statistical
-    view of the known exoplanet population and their host environments.
-    This table provides a more complete, though not necessarily
+    for *ps* and *pscomppars*, “PSCompPars is a more filled-in table,
+    with only one row per planet, enabling a more statistical view of
+    the known exoplanet population and their host environments. This
+    table provides a more complete, though not necessarily
     self-consistent, set of parameters.”
 -   `startYear = 1989` - the earliest listing in the PSCompPars table,
     attributed to the planet [HD 114762
@@ -66,6 +66,8 @@ values for this function are:
     calendar year as understood by the user’s computer.
 -   `controversial = 0` - exclude planets for which the confirmation
     status “has been questioned in the published literature.”
+-   `cb_flag = 0` - exclude (0) planets which orbits a binary system. An
+    options of `1` lists only planets which orbit two or more stars.
 -   `format = json` = return queries in JSON format. You may also
     request data as a comma-separated-value file (CSV).
 
@@ -110,7 +112,7 @@ associated stellar flux boundaries for a star of effective temperature
 `tempEff` and a stellar luminosity `luminosityRatio`. The calculations
 are based on formulae defined by Kopparapu et al., whereby the effective
 solar flux *S*<sub>*e**f**f*</sub> is defined as
-*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T*<sub>⋆</sub> + *b**T*<sub>⋆</sub><sup>2</sup> + *c**T*<sub>⋆</sub><sup>3</sup> + *d**T*<sub>⋆</sub><sup>4</sup>
+*S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + *a**T* + *b**T*<sup>2</sup> + *c**T*<sup>3</sup> + *d**T*<sup>4</sup>
 and the corresponding habiatability zone distances, *d*, are defined as
 *d* = (*L*/*L* ⊙ )/(*S*<sub>*e**f**f*</sub>)<sup>0.5</sup> AU (Kopparapu
 et al., 2014). The required parameters for this function are:
@@ -377,7 +379,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 21:47:34 2021, the NASA Exoplanet Archive’s [Planetary
+As of Mon Oct 4 21:52:33 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -408,7 +410,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -524,7 +526,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -559,7 +561,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -648,7 +650,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -661,7 +663,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ``` r
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
@@ -699,7 +701,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing
     ## non-finite values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -733,7 +735,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ### Exoplanet habitability
 
