@@ -455,7 +455,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
 
 By combining radii with the masses of planets, we can produce a mass-radius diagram and calculate planetary densities. From this diagram, it is also apparent that planetary radii tend to increase with mass until approximately $1000 M\oplus$, at which point gravity impels even the hardiest planetary material to compress and constrains further radial growth [@doi:10.1080/23746149.2019.1630316]. 
 
-```{r , echo=TRUE, eval=TRUE}
+```{r , echo=TRUE, eval=TRUE, message=FALSE}
 # New vector with temporary data
 tempMassData <- exoplanetData 
 
