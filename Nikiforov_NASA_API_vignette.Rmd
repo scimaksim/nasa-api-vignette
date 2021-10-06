@@ -271,6 +271,7 @@ The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exop
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Retrieve latest exoplanet data
 exoplanetData <- annualExoDiscoveries()
+str(exoplanetData)
 
 # Display the first five rows of data
 head(exoplanetData, n = 5) %>% knitr::kable()

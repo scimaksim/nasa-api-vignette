@@ -339,7 +339,34 @@ below.
 ``` r
 # Retrieve latest exoplanet data
 exoplanetData <- annualExoDiscoveries()
+str(exoplanetData)
+```
 
+    ## 'data.frame':    4462 obs. of  22 variables:
+    ##  $ pl_name        : chr  "OGLE-2016-BLG-1227L b" "GJ 480 b" "Kepler-276 c" "Kepler-829 b" ...
+    ##  $ disc_year      : int  2020 2020 2013 2016 2018 2016 2010 2005 2007 2010 ...
+    ##  $ discoverymethod: chr  "Microlensing" "Radial Velocity" "Transit" "Transit" ...
+    ##  $ pl_orbper      : num  NA 9.57 31.88 6.88 1.92 ...
+    ##  $ pl_rade        : num  13.9 3.69 2.9 2.11 3.52 ...
+    ##  $ pl_bmasse      : num  250 13.2 16.6 5.1 12.2 ...
+    ##  $ pl_radj        : num  1.24 0.33 0.259 0.188 0.314 0.185 1.06 1.22 1.2 1.18 ...
+    ##  $ pl_bmassj      : num  0.79 0.0415 0.052 0.016 0.0383 ...
+    ##  $ pl_eqt         : num  NA NA 563 857 1186 ...
+    ##  $ pl_dens        : num  0.512 1.44 3.74 2.98 1.54 3.06 1.96 0.923 1.31 0.273 ...
+    ##  $ st_spectype    : chr  NA "M3.5 Ve" NA NA ...
+    ##  $ st_teff        : num  NA 3381 5779 5698 5060 ...
+    ##  $ st_lum         : num  NA -1.612 -0.089 0.04 -0.524 ...
+    ##  $ pl_controv_flag: int  0 0 0 0 0 0 0 0 0 0 ...
+    ##  $ pl_orbeccen    : num  NA 0.1 0 0 NA 0 0.19 0.0167 0.028 0.17 ...
+    ##  $ pl_orbsmax     : num  3.4 0.068 0.1994 0.0678 0.0291 ...
+    ##  $ st_mass        : num  0.1 0.45 1.1 0.98 0.89 0.87 1 1.2 1.61 0.69 ...
+    ##  $ st_metratio    : chr  NA NA "[Fe/H]" "[Fe/H]" ...
+    ##  $ st_met         : num  NA NA 0.02 0.03 0.28 -0.04 0.22 0.29 0.04 -0.14 ...
+    ##  $ sy_snum        : int  1 1 1 1 1 2 1 1 1 1 ...
+    ##  $ sy_pnum        : int  1 1 3 1 1 1 1 1 1 1 ...
+    ##  $ luminosityRatio: num  NA 0.0244 0.8147 1.0965 0.2992 ...
+
+``` r
 # Display the first five rows of data
 head(exoplanetData, n = 5) %>% knitr::kable()
 ```
@@ -352,7 +379,7 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |       0.2992265 |
 
-As of Wed Oct 6 13:53:09 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 13:56:59 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. By
@@ -418,7 +445,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -534,7 +561,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -569,7 +596,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -634,7 +661,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -648,7 +675,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -688,7 +715,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing non-finite
     ## values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -722,7 +749,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ### Exoplanet habitability
 
