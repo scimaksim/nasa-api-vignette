@@ -337,7 +337,7 @@ The data frame below contains the names of planets which are thought to orbit tw
 circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1)
 
 # Display in a matrix with "ncol = ..." columns
-matrix(circumbinaryPlanets$pl_name, ncol = 3)
+matrix(circumbinaryPlanets$pl_name, nrow = 13, byrow = TRUE)
 ```
 
 They are presented in the table above for completeness but, to reduce the complexity of _n_-body problems, they are excluded by default from the `annualExoDiscoveries()` function. 
