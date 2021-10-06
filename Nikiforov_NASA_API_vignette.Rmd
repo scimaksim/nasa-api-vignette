@@ -266,7 +266,7 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 
 ### Annual discoveries
 
-The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13). Moreover, to refrain from complex orbital mechanics, the function also excludes circumbinary planets - systems in which planets orbit two stars.  
+The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. 
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Retrieve latest exoplanet data
@@ -275,10 +275,9 @@ exoplanetData <- annualExoDiscoveries()
 # List the variables and their properties
 as_tibble(exoplanetData)
 ```
+As of `r date()`, the archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetData$pl_name)` confirmed exoplanet observations. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13). Moreover, to refrain from complex orbital mechanics, the function also excludes circumbinary systems - ones in which planets orbit two stars.  
 
-As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed exoplanet observations. 
-
-We can compare the composition of these systems against that of our own solar system, with its one star and eight planets. 
+We can compare the composition of extrasolar systems against that of our own, with its one star and eight planets. 
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Two-way contingency table
