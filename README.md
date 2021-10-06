@@ -209,8 +209,8 @@ A, etc.).
 
 Habitability zone distances and incident flux are calculated only for
 planets with a mass of 10*M*⊕ or less. This is the hypothetical
-threshold for “planets composed substantially of volatiles” such as
-*H*<sub>2</sub>*O* and *N**H*<sub>3</sub> (Kuchner, 2003).
+threshold for planets with an appreciable composition of “volatiles”
+such as *H*<sub>2</sub>*O* and *N**H*<sub>3</sub> (Kuchner, 2003).
 
 ``` r
 # Customer function to calculate values for 
@@ -367,7 +367,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Tue Oct 5 21:13:01 2021, the NASA Exoplanet Archive’s [Planetary
+As of Tue Oct 5 21:15:51 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
