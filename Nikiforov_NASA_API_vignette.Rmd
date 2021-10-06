@@ -24,7 +24,7 @@ library(ggrepel)
 
 ## Introduction
 
-This vignette has made use of the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/docs/intro.html), which is operated by the California Institute of Technology, under contract with the National Aeronautics and Space Administration under the Exoplanet Exploration Program (@https://doi.org/10.26133/nea13).
+This vignette has made use of the [NASA Exoplanet Archive](https://exoplanetarchive.ipac.caltech.edu/docs/intro.html), which is operated by the California Institute of Technology, under contract with the National Aeronautics and Space Administration under the Exoplanet Exploration Program.
 
 ## Package requirements
 
@@ -61,7 +61,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
                                  cb_flag = 0,
                                  format = "json"){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met+from+", 
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum+from+", 
                       tableName, "+where+disc_year+between+", 
                       startYear, "+and+", endYear, 
                       "+and+pl_controv_flag+=+", controversialFlag, 
@@ -266,7 +266,7 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 
 ### Annual discoveries
 
-The `annualExoDiscoveries()` function retrieves the latest exoplanet data from NASA's Exoplanet Archive. By default, the function excludes bodies which have had their planetary status "questioned in the published literature".   
+The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13).  
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Retrieve latest exoplanet data
@@ -275,6 +275,17 @@ exoplanetData
 
 # Print a subset of observations
 exoplanetData
+```
+
+
+Moreover, to avoid complex orbital mechanics, the function also excludes observations in which planets orbit more than one stars. However, for fun, we quantify such systems below.
+
+```{r , echo=TRUE, eval=TRUE, rows.print=10}
+# Retrieve list of planets which orbit more than one star
+exoticSolarSystems <- annualExoDiscoveries(cb_flag = 1) 
+
+# Frequency of planets orbiting two, three, or four stars
+knitr::kable(table(exoticSolarSystems$sy_snum), col.names = c("Number of stars", "Total number of systems"))
 ```
 
 
