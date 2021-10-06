@@ -383,7 +383,7 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |       0.2992265 |
 
-As of Wed Oct 6 14:39:39 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 14:55:30 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. We can
@@ -393,22 +393,16 @@ own.
 ``` r
 # Two-way contingency table
 # Quantify systems according to the total number of stars and planets
-starPlanetFreq <- table(exoplanetData$sy_snum, exoplanetData$sy_pnum)
+starPlanetFreq <- ftable(exoplanetData$sy_snum, exoplanetData$sy_pnum)
 starPlanetFreq
 ```
 
-    ##    
-    ##        1    2    3    4    5    6    7
-    ##   1 2312  950  438  212   95   41    7
-    ##   2  200   57   39   32   15    6    0
-    ##   3   34    8    0    0    7    0    0
-    ##   4    1    0    0    0    0    0    0
-    ##    
-    ##        8
-    ##   1    8
-    ##   2    0
-    ##   3    0
-    ##   4    0
+    ##       1    2    3    4    5    6    7    8
+    ##                                           
+    ## 1  2312  950  438  212   95   41    7    8
+    ## 2   200   57   39   32   15    6    0    0
+    ## 3    34    8    0    0    7    0    0    0
+    ## 4     1    0    0    0    0    0    0    0
 
 2312 planets - more than 51.8% of all observed - orbit a single star and
 have no other planetary companions. Another 950 planets (21.3%) have one
@@ -442,7 +436,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -582,7 +576,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -617,7 +611,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -682,7 +676,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -696,7 +690,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -736,7 +730,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing non-finite
     ## values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -770,7 +764,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 ### Exoplanet habitability
 

@@ -283,7 +283,7 @@ As of `r date()`, the archive's [Planetary Systems Composite Parameters](https:/
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Two-way contingency table
 # Quantify systems according to the total number of stars and planets
-starPlanetFreq <- table(exoplanetData$sy_snum, exoplanetData$sy_pnum)
+starPlanetFreq <- ftable(exoplanetData$sy_snum, exoplanetData$sy_pnum)
 starPlanetFreq
 ```
 
