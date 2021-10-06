@@ -89,7 +89,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
                                  cb_flag = 0,
                                  format = "json"){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum+from+", 
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum,sy_pnum+from+", 
                       tableName, "+where+disc_year+between+", 
                       startYear, "+and+", endYear, 
                       "+and+pl_controv_flag+=+", controversialFlag, 
@@ -335,15 +335,19 @@ The `annualExoDiscoveries()` function retrieves the latest data from
 NASA’s Exoplanet Archive. By default, the function targets the Planetary
 Systems Composite Parameters Table and excludes bodies which have had
 their planetary status “questioned in the published literature” (NASA
-Exoplanet Science Institute (2020)).
+Exoplanet Science Institute (2020)). Moreover, to refrain from complex
+orbital mechanics, the function also excludes circumbinary planets -
+systems in which planets orbit two stars.
 
 ``` r
 # Retrieve latest exoplanet data
 exoplanetData <- annualExoDiscoveries()
-exoplanetData
+
+# List the variables and their properties
+as_tibble(exoplanetData)
 ```
 
-    ## # A tibble: 4,462 × 21
+    ## # A tibble: 4,462 × 22
     ##    pl_name    disc_year discoverymethod
     ##    <chr>          <int> <chr>          
     ##  1 OGLE-2016…      2020 Microlensing   
@@ -356,7 +360,7 @@ exoplanetData
     ##  8 HD 149143…      2005 Radial Velocity
     ##  9 HD 210702…      2007 Radial Velocity
     ## 10 HIP 12961…      2010 Radial Velocity
-    ## # … with 4,452 more rows, and 18 more
+    ## # … with 4,452 more rows, and 19 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -364,57 +368,42 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-``` r
-# Print a subset of observations
-exoplanetData
-```
-
-    ## # A tibble: 4,462 × 21
-    ##    pl_name    disc_year discoverymethod
-    ##    <chr>          <int> <chr>          
-    ##  1 OGLE-2016…      2020 Microlensing   
-    ##  2 GJ 480 b        2020 Radial Velocity
-    ##  3 Kepler-27…      2013 Transit        
-    ##  4 Kepler-82…      2016 Transit        
-    ##  5 K2-283 b        2018 Transit        
-    ##  6 Kepler-47…      2016 Transit        
-    ##  7 HAT-P-15 b      2010 Transit        
-    ##  8 HD 149143…      2005 Radial Velocity
-    ##  9 HD 210702…      2007 Radial Velocity
-    ## 10 HIP 12961…      2010 Radial Velocity
-    ## # … with 4,452 more rows, and 18 more
-    ## #   variables: pl_orbper <dbl>,
-    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
-    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
-    ## #   pl_eqt <dbl>, pl_dens <dbl>,
-    ## #   st_spectype <chr>, st_teff <dbl>,
-    ## #   st_lum <dbl>, …
-
-Moreover, to avoid complex orbital mechanics, the function also excludes
-observations in which planets orbit more than one stars. However, for
-fun, we quantify such systems below.
-
-``` r
-# Retrieve list of planets which orbit more than one star
-exoticSolarSystems <- annualExoDiscoveries(cb_flag = 1) 
-
-# Frequency of planets orbiting two, three, or four stars
-knitr::kable(table(exoticSolarSystems$sy_snum), col.names = c("Number of stars", "Total number of systems"))
-```
-
-| Number of stars | Total number of systems |
-|:----------------|------------------------:|
-| 2               |                      37 |
-| 3               |                       1 |
-| 4               |                       1 |
-
-As of Tue Oct 5 22:20:02 2021, the NASA Exoplanet Archive’s [Planetary
+As of Tue Oct 5 23:22:39 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
-(PSCompPars) table lists 4501 confirmed exoplanet observations. The
-stacked bar plot below enumerates the annual number of exoplanet
-findings since 1989 and highlights 2014 and 2016 as the most prolific
-years for discovery.
+(PSCompPars) table lists 4501 confirmed exoplanet observations.
+
+We can compare the composition of these systems against that of our own
+solar system, with its one star and eight planets.
+
+``` r
+# Two-way contingency table
+# Quantify systems according to the total number of stars and planets
+starPlanetFreq <- table(exoplanetData$sy_snum, exoplanetData$sy_pnum)
+starPlanetFreq
+```
+
+    ##    
+    ##        1    2    3    4    5    6    7
+    ##   1 2312  950  438  212   95   41    7
+    ##   2  200   57   39   32   15    6    0
+    ##   3   34    8    0    0    7    0    0
+    ##   4    1    0    0    0    0    0    0
+    ##    
+    ##        8
+    ##   1    8
+    ##   2    0
+    ##   3    0
+    ##   4    0
+
+2312 systems - more than 51.4% of all observed - orbit a single star and
+have no other planetary companions. Another 950 systems (21.1%) have one
+star and two planets. 7 systems are particularly interesting, with three
+stars and five planets in their system. One observations contains a
+planet with a record four stars.
+
+We can also enumerate the annual number of exoplanet findings since 1989
+and identify 2014 and 2016 as the most prolific years for discovery.
 
 ``` r
 # Retrieve latest exoplanet data
@@ -439,7 +428,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-70-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -478,7 +467,7 @@ circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1)
 circumbinaryPlanets
 ```
 
-    ## # A tibble: 39 × 21
+    ## # A tibble: 39 × 22
     ##    pl_name    disc_year discoverymethod
     ##    <chr>          <int> <chr>          
     ##  1 NSVS 1425…      2019 Eclipse Timing…
@@ -491,7 +480,7 @@ circumbinaryPlanets
     ##  8 2MASS J01…      2013 Imaging        
     ##  9 Kepler-45…      2015 Transit        
     ## 10 Kepler-35…      2011 Transit        
-    ## # … with 29 more rows, and 18 more
+    ## # … with 29 more rows, and 19 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -555,7 +544,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-74-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -590,7 +579,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-75-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -612,7 +601,7 @@ metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
 metallicityData %>% mutate(giantPlFlag = NA)
 ```
 
-    ## # A tibble: 3,459 × 22
+    ## # A tibble: 3,459 × 23
     ##    pl_name      disc_year discoverymethod
     ##    <chr>            <int> <chr>          
     ##  1 Kepler-276 c      2013 Transit        
@@ -625,7 +614,7 @@ metallicityData %>% mutate(giantPlFlag = NA)
     ##  8 HIP 12961 b       2010 Radial Velocity
     ##  9 XO-5 b            2008 Transit        
     ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,449 more rows, and 19 more
+    ## # … with 3,449 more rows, and 20 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -655,7 +644,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-76-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -669,7 +658,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-77-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -709,7 +698,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing non-finite
     ## values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-32-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-79-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -743,7 +732,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-33-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-80-1.png)<!-- -->
 
 ### Exoplanet habitability
 
@@ -788,7 +777,7 @@ planetData <- hzFluxCalculator(planetData)
 head(planetData, n = 10)
 ```
 
-    ## # A tibble: 10 × 26
+    ## # A tibble: 10 × 27
     ##    pl_name    disc_year discoverymethod
     ##    <chr>          <int> <chr>          
     ##  1 OGLE-2016…      2020 Microlensing   
@@ -801,7 +790,7 @@ head(planetData, n = 10)
     ##  8 HD 149143…      2005 Radial Velocity
     ##  9 HD 210702…      2007 Radial Velocity
     ## 10 HIP 12961…      2010 Radial Velocity
-    ## # … with 23 more variables:
+    ## # … with 24 more variables:
     ## #   pl_orbper <dbl>, pl_rade <dbl>,
     ## #   pl_bmasse <dbl>, pl_radj <dbl>,
     ## #   pl_bmassj <dbl>, pl_eqt <dbl>,

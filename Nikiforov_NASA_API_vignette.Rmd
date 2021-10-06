@@ -61,7 +61,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
                                  cb_flag = 0,
                                  format = "json"){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum+from+", 
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum,sy_pnum+from+", 
                       tableName, "+where+disc_year+between+", 
                       startYear, "+and+", endYear, 
                       "+and+pl_controv_flag+=+", controversialFlag, 
@@ -266,31 +266,30 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 
 ### Annual discoveries
 
-The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13).  
+The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13). Moreover, to refrain from complex orbital mechanics, the function also excludes circumbinary planets - systems in which planets orbit two stars.  
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Retrieve latest exoplanet data
 exoplanetData <- annualExoDiscoveries()
-exoplanetData
 
-# Print a subset of observations
-exoplanetData
+# List the variables and their properties
+as_tibble(exoplanetData)
 ```
 
+As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed exoplanet observations. 
 
-Moreover, to avoid complex orbital mechanics, the function also excludes observations in which planets orbit more than one stars. However, for fun, we quantify such systems below.
+We can compare the composition of these systems against that of our own solar system, with its one star and eight planets. 
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
-# Retrieve list of planets which orbit more than one star
-exoticSolarSystems <- annualExoDiscoveries(cb_flag = 1) 
-
-# Frequency of planets orbiting two, three, or four stars
-knitr::kable(table(exoticSolarSystems$sy_snum), col.names = c("Number of stars", "Total number of systems"))
+# Two-way contingency table
+# Quantify systems according to the total number of stars and planets
+starPlanetFreq <- table(exoplanetData$sy_snum, exoplanetData$sy_pnum)
+starPlanetFreq
 ```
 
+`r starPlanetFreq[1, 1]` systems - more than `r round((starPlanetFreq[1, 1])/(length(exoplanetCount$pl_name))*100, 1)`% of all observed - orbit a single star and have no other planetary companions. Another `r starPlanetFreq[1, 2]` systems (`r round((starPlanetFreq[1, 2])/(length(exoplanetCount$pl_name))*100, 1)`%) have one star and two planets. `r starPlanetFreq[3, 5]` systems are particularly interesting, with three stars and five planets in their system. One observations contains a planet with a record four stars. 
 
-As of `r date()`, the NASA Exoplanet Archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetCount$pl_name)` confirmed exoplanet observations. The stacked bar plot below enumerates the annual number of exoplanet findings since 1989 and highlights 2014 and 2016 as the most prolific years for discovery.  
-
+We can also enumerate the annual number of exoplanet findings since 1989 and identify 2014 and 2016 as the most prolific years for discovery.  
 
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve latest exoplanet data
