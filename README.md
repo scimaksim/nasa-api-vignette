@@ -383,7 +383,7 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |       0.2992265 |
 
-As of Wed Oct 6 14:55:30 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 15:09:42 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. We can
@@ -391,7 +391,8 @@ compare the composition of their extrasolar systems against that of our
 own.
 
 ``` r
-# Two-way contingency table
+# Two-way "flat" contingency table to display complete rows (vs. table(), which 
+# displays the last column separately from others)
 # Quantify systems according to the total number of stars and planets
 starPlanetFreq <- ftable(exoplanetData$sy_snum, exoplanetData$sy_pnum)
 starPlanetFreq
@@ -436,7 +437,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -476,52 +477,58 @@ orbit two or more stars - the so-called “circumbinary planets” (R. et
 al., 2011).
 
 ``` r
-circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1) 
-circumbinaryPlanets$pl_name
+# Query all known circumbinary systems
+circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1)
+
+# Display in a matrix with "ncol = ..." columns
+matrix(circumbinaryPlanets$pl_name, ncol = 3)
 ```
 
-    ##  [1] "NSVS 14256825 b"             
-    ##  [2] "RR Cae b"                    
-    ##  [3] "2MASS J19383260+4603591 b"   
-    ##  [4] "SR 12 AB c"                  
-    ##  [5] "MXB 1658-298 b"              
-    ##  [6] "Kepler-1647 b"               
-    ##  [7] "VHS J125601.92-125723.9 b"   
-    ##  [8] "2MASS J01033563-5515561 AB b"
-    ##  [9] "Kepler-453 b"                
-    ## [10] "Kepler-35 b"                 
-    ## [11] "Kepler-47 c"                 
-    ## [12] "Kepler-47 b"                 
-    ## [13] "NY Vir b"                    
-    ## [14] "NY Vir c"                    
-    ## [15] "DP Leo b"                    
-    ## [16] "HIP 79098 AB b"              
-    ## [17] "KIC 5095269 b"               
-    ## [18] "Kepler-16 b"                 
-    ## [19] "Kepler-1661 b"               
-    ## [20] "NN Ser d"                    
-    ## [21] "ROXs 42 B b"                 
-    ## [22] "OGLE-2016-BLG-0613L AB b"    
-    ## [23] "UZ For c"                    
-    ## [24] "DE CVn b"                    
-    ## [25] "HD 202206 c"                 
-    ## [26] "OGLE-2018-BLG-1700L b"       
-    ## [27] "PH1 b"                       
-    ## [28] "OGLE-2007-BLG-349L AB c"     
-    ## [29] "Ross 458 c"                  
-    ## [30] "NN Ser c"                    
-    ## [31] "TOI-1338 b"                  
-    ## [32] "Kepler-413 b"                
-    ## [33] "Kepler-47 d"                 
-    ## [34] "HW Vir b"                    
-    ## [35] "PSR B1620-26 b"              
-    ## [36] "Kepler-34 b"                 
-    ## [37] "UZ For b"                    
-    ## [38] "Kepler-38 b"                 
-    ## [39] "TIC 172900988 b"
+    ##       [,1]                          
+    ##  [1,] "NSVS 14256825 b"             
+    ##  [2,] "RR Cae b"                    
+    ##  [3,] "2MASS J19383260+4603591 b"   
+    ##  [4,] "SR 12 AB c"                  
+    ##  [5,] "MXB 1658-298 b"              
+    ##  [6,] "Kepler-1647 b"               
+    ##  [7,] "VHS J125601.92-125723.9 b"   
+    ##  [8,] "2MASS J01033563-5515561 AB b"
+    ##  [9,] "Kepler-453 b"                
+    ## [10,] "Kepler-35 b"                 
+    ## [11,] "Kepler-47 c"                 
+    ## [12,] "Kepler-47 b"                 
+    ## [13,] "NY Vir b"                    
+    ##       [,2]                      
+    ##  [1,] "NY Vir c"                
+    ##  [2,] "DP Leo b"                
+    ##  [3,] "HIP 79098 AB b"          
+    ##  [4,] "KIC 5095269 b"           
+    ##  [5,] "Kepler-16 b"             
+    ##  [6,] "Kepler-1661 b"           
+    ##  [7,] "NN Ser d"                
+    ##  [8,] "ROXs 42 B b"             
+    ##  [9,] "OGLE-2016-BLG-0613L AB b"
+    ## [10,] "UZ For c"                
+    ## [11,] "DE CVn b"                
+    ## [12,] "HD 202206 c"             
+    ## [13,] "OGLE-2018-BLG-1700L b"   
+    ##       [,3]                     
+    ##  [1,] "PH1 b"                  
+    ##  [2,] "OGLE-2007-BLG-349L AB c"
+    ##  [3,] "Ross 458 c"             
+    ##  [4,] "NN Ser c"               
+    ##  [5,] "TOI-1338 b"             
+    ##  [6,] "Kepler-413 b"           
+    ##  [7,] "Kepler-47 d"            
+    ##  [8,] "HW Vir b"               
+    ##  [9,] "PSR B1620-26 b"         
+    ## [10,] "Kepler-34 b"            
+    ## [11,] "UZ For b"               
+    ## [12,] "Kepler-38 b"            
+    ## [13,] "TIC 172900988 b"
 
 They are presented in the table above for completeness but, to reduce
-the complexity of two-body problems, they are excluded by default from
+the complexity of *n*-body problems, they are excluded by default from
 the `annualExoDiscoveries()` function.
 
 ### Discovery methods
@@ -576,7 +583,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -611,7 +618,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -676,7 +683,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -690,7 +697,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -730,7 +737,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing non-finite
     ## values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -764,7 +771,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ### Exoplanet habitability
 

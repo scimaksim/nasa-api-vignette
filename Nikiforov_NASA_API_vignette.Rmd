@@ -281,7 +281,8 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 As of `r date()`, the archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetData$pl_name)` confirmed exoplanet observations. We can compare the composition of their extrasolar systems against that of our own. 
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
-# Two-way contingency table
+# Two-way "flat" contingency table to display complete rows (vs. table(), which 
+# displays the last column separately from others)
 # Quantify systems according to the total number of stars and planets
 starPlanetFreq <- ftable(exoplanetData$sy_snum, exoplanetData$sy_pnum)
 starPlanetFreq
@@ -332,11 +333,14 @@ knitr::kable(discoveriesByMethod,
 The data frame below contains the names of planets which are thought to orbit two or more stars - the so-called "circumbinary planets" [@kepler-16]. 
 
 ```{r , echo=TRUE, eval=TRUE}
-circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1) 
-circumbinaryPlanets$pl_name
+# Query all known circumbinary systems
+circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1)
+
+# Display in a matrix with "ncol = ..." columns
+matrix(circumbinaryPlanets$pl_name, ncol = 3)
 ```
 
-They are presented in the table above for completeness but, to reduce the complexity of two-body problems, they are excluded by default from the `annualExoDiscoveries()` function. 
+They are presented in the table above for completeness but, to reduce the complexity of _n_-body problems, they are excluded by default from the `annualExoDiscoveries()` function. 
 
 ### Discovery methods
 
