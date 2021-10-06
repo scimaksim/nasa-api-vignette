@@ -210,19 +210,23 @@ A, etc.).
 Habitability zone distances and incident flux are calculated only for
 planets with a mass of 10*M*⊕ or less. This is the hypothetical
 threshold for planets with an appreciable composition of “volatiles”
-such as *H*<sub>2</sub>*O* and *N**H*<sub>3</sub> (Kuchner, 2003).
+such as water and ammonia (Kuchner, 2003).
 
 ``` r
-# Customer function to calculate values for 
-# inner and outer habitable zone, flux
+# Custom function to calculate values for 
+# inner and outer habitable zone, stellar flux
 hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse", 
                              starSpecTypeCol = "st_spectype", 
                              effectiveTempCol = "st_teff",
                              luminosityRatioCol = "luminosityRatio"){
   
+  # Add columns for inner, outer habitable zone distances, flux as well as
+  # a column for the primary spectral class 
   data %>% mutate(innerHZ = NA, outerHZ = NA, innerFlux = NA, 
                   outerFlux = NA, spectralClass = NA)
   
+  # Transform custom column names (char) into vectors which can be used in 
+  # loops
   earthMassCol <- data[ , earthMassCol]
   starSpecTypeCol <- data[ , starSpecTypeCol]
   effectiveTempCol <- data[ , effectiveTempCol]
@@ -230,19 +234,22 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
   
   for(i in 1:length(earthMassCol)){
     if(!is.na(starSpecTypeCol[i])){
+      # Extract first letter from stellar classification in the NASA Exoplanet Archive
       data$spectralClass[i] <- substr(starSpecTypeCol[i], 1, 1)
     } else {
+      # If stellar classification is not provided
       data$spectralClass[i] <- NA
     }
     
-    
+    # Exclude planets which are larger than "super-Earths" (10M)
     if(!is.na(earthMassCol[i]) & earthMassCol[i] <= 10 & 
        earthMassCol[i] >= 0.1){
       
-      
+      # Create list of habitability zone and flux parameters
       hzVars <- calculateHZ(effectiveTempCol[i], 
                             luminosityRatioCol[i])
       
+      # Extract individual parameters from the list
       data$innerHZ[i] <- hzVars[[1]]
       data$outerHZ[i] <- hzVars[[2]]
       
@@ -263,25 +270,27 @@ hzFluxCalculator <- function(data, earthMassCol = "pl_bmasse",
 
 ### habitableExoFinder()
 
-This function produces a data frame of potentially habitable exoplanets
-from a set of general habitability criteria, many of which are inspired
-by the University of Puerto Rico’s [Planetary Habitability
+This function produces a data frame listing potentially habitable
+exoplanets from a set of general habitability criteria, many of which
+are inspired by the University of Puerto Rico’s [Planetary Habitability
 Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods).
 
 These parameters can be tuned using arguments from published research.
 For simplicity, the default values are:
 
--   `minEarthMass = 0.1`
--   `maxEarthMass = 5`
--   `minEarthRadius = 0.5`
--   `maxEarthRadius = 1.5`
--   `maxInnerFlux = 1.5`
--   `maxOuterFlux = 0.20`
--   `minTemp = 273` - units of Kelvin
--   `maxTemp = 340` - units of Kelvin
+-   `minEarthMass = 0.1` - minimum acceptable planet mass (*M*⊕).
+-   `maxEarthMass = 5` - maximum acceptable planet mass (*M*⊕).
+-   `minEarthRadius = 0.5` - minimum acceptable radius (*R*⊕).
+-   `maxEarthRadius = 1.5` - maximum acceptable radius (*R*⊕).
+-   `maxInnerFlux = 1.5` - maximum stellar flux incident on a planet.
+-   `maxOuterFlux = 0.20` - minimum stellar flux incident on a planet.
+-   `minTemp = 273` - minimum effective temperature of the planet in
+    units of Kelvin.
+-   `maxTemp = 340` - maximum effective temperature of the planet in
+    units of Kelvin.
 
 ``` r
-# Create function to identify potentially habitable exoplanets. 
+# Identify potentially habitable exoplanets. 
 # Default function parameters provided by Planetary Habitability Laboratory, 
 # http://phl.upr.edu/projects/habitable-exoplanets-catalog
 habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5, 
@@ -294,6 +303,8 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
                                       pl_bmasse, pl_rade, pl_orbeccen, 
                                       pl_orbsmax, innerHZ, outerHZ, 
                                       innerFlux, outerFlux) %>% 
+    # Consider planets which only orbit stars of type F, G, K, and M
+    # Subset data based on supplied planetary conditions
     filter(spectralClass %in% c("F", "G", "K", "M") & 
              (pl_orbsmax >= innerHZ) & (pl_orbsmax <= outerHZ) & 
              (pl_bmasse >= minEarthMass) &
@@ -301,7 +312,7 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
              (pl_rade >= minEarthRadius) & (pl_rade <= maxEarthRadius) &
              (innerFlux <= maxInnerFlux) & (outerFlux >= maxOuterFlux) &
              (pl_eqt <= maxTemp | (is.na(pl_eqt))) & 
-             (pl_eqt >= minTemp | (is.na(pl_eqt == NA))))
+             (pl_eqt >= minTemp | (is.na(pl_eqt))))
   
   return(habitablePlanets)
 }
@@ -367,7 +378,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Tue Oct 5 21:15:51 2021, the NASA Exoplanet Archive’s [Planetary
+As of Tue Oct 5 21:29:05 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
