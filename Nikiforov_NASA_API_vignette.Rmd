@@ -61,7 +61,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
                                  cb_flag = 0,
                                  format = "json"){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum,sy_pnum+from+", 
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum,sy_pnum,sy_dist+from+", 
                       tableName, "+where+disc_year+between+", 
                       startYear, "+and+", endYear, 
                       "+and+pl_controv_flag+=+", controversialFlag, 
@@ -344,7 +344,7 @@ They are presented in the table above for completeness but, to reduce the comple
 
 ### Discovery methods
 
-Each exoplanet observation method excels in specific scenarios. The transit and radial velocity detection methods favor planets which orbit their star at an average distance of 0.12-1.6 AU.  
+Exoplanet observation methods excel under specific conditions. Direct imaging, for instance, requires planets to be relatively far from their star in order for stellar brightness not to overwhelm planetary dimness.      
 
 ```{r , echo=TRUE, eval=TRUE}
 # Subset data to include only detection methods with a relatively large number
@@ -352,7 +352,7 @@ Each exoplanet observation method excels in specific scenarios. The transit and 
 extendedDiscoveryProp <- exoplanetData
 extendedDiscoveryProp <- extendedDiscoveryProp %>% 
   filter(discoverymethod %in% c("Transit", "Radial Velocity", "Microlensing", "Imaging") &
-           !is.na(pl_orbsmax))
+           !is.na(pl_orbsmax) & !is.na(sy_dist))
 
 # Display mean and median semi-major axes (in units of AU) for 
 # planets observed by these methods
@@ -364,20 +364,24 @@ knitr::kable(discoverySummaries,
 ```
 
 
-Direct imaging, on the other hand, requires planets to be relatively far from a star in order for the stellar brightness not to overwhelm the planetary dimness. In this data set, the median distance for a planet that was directly observed is 162 AU. The boxplot below shows the distribution of semi-major axes for four of the most productive exoplanet observation methods.
+The transit, radial velocity, and microlensing methods favor the detection of planets which orbit their star at an average distance of `r round(discoverySummaries[[4,2]], 1)`- `r round(discoverySummaries[[2,2]], 1)` AU. For direct observations, the median semi-major axis for planets is `r round(discoverySummaries[[1,3]], 1)` AU. The fact that the mean is `r round(discoverySummaries[[1,2]]/discoverySummaries[[1,3]], 1)` times higher than the median indicates the presence of outliers at substantially higher separations from their star.  
 
+The boxplot below shows another distinction between the observation methods. Compared to radial velocity and direct imaging, detection through microlensing captures planets at a median distance that is over one hundred times higher from our solar system.     
 
 ```{r , echo=TRUE, eval=TRUE}
+# Boxplot, four most prolific discovery methods and quantitative summaries for
+# distances (in parsecs) to the observed planets
 orbsmaxBoxPlot <- ggplot(extendedDiscoveryProp, 
-                         aes(x = discoverymethod, y = pl_orbsmax,
+                         aes(x = discoverymethod, y = sy_dist,
                              fill = discoverymethod))
+
 orbsmaxBoxPlot + geom_boxplot() +
   # Remove legend after coloration
   theme(legend.position = "none") +
   scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
-  labs(x = "Discovery method", y = "Orbit semi-major axis (log)",
-       title = "Distribution of semi-major axes for various discovery methods") +
+  labs(x = "Discovery method", y = "Distance (log(pc))",
+       title = "Detection methods and \n summary of distances to the planetary systems") +
   # Add log ticks to left side
   annotation_logticks(sides="l")
 ```

@@ -90,7 +90,7 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
                                  cb_flag = 0,
                                  format = "json"){
   # Create URL string
-  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum,sy_pnum+from+", 
+  urlString <- paste0("https://exoplanetarchive.ipac.caltech.edu/TAP/sync?query=select+pl_name,disc_year,discoverymethod,pl_orbper,pl_rade,pl_bmasse,pl_radj,pl_bmassj,pl_eqt,pl_dens,st_spectype,st_teff,st_lum,pl_controv_flag,pl_orbeccen,pl_orbsmax,st_mass,st_metratio,st_met,sy_snum,sy_pnum,sy_dist+from+", 
                       tableName, "+where+disc_year+between+", 
                       startYear, "+and+", endYear, 
                       "+and+pl_controv_flag+=+", controversialFlag, 
@@ -346,7 +346,7 @@ exoplanetData <- annualExoDiscoveries()
 str(exoplanetData)
 ```
 
-    ## 'data.frame':    4462 obs. of  22 variables:
+    ## 'data.frame':    4462 obs. of  23 variables:
     ##  $ pl_name        : chr  "OGLE-2016-BLG-1227L b" "GJ 480 b" "Kepler-276 c" "Kepler-829 b" ...
     ##  $ disc_year      : int  2020 2020 2013 2016 2018 2016 2010 2005 2007 2010 ...
     ##  $ discoverymethod: chr  "Microlensing" "Radial Velocity" "Transit" "Transit" ...
@@ -368,6 +368,7 @@ str(exoplanetData)
     ##  $ st_met         : num  NA NA 0.02 0.03 0.28 -0.04 0.22 0.29 0.04 -0.14 ...
     ##  $ sy_snum        : int  1 1 1 1 1 2 1 1 1 1 ...
     ##  $ sy_pnum        : int  1 1 3 1 1 1 1 1 1 1 ...
+    ##  $ sy_dist        : num  NA 14.2 1144.9 1073.8 402.9 ...
     ##  $ luminosityRatio: num  NA 0.0244 0.8147 1.0965 0.2992 ...
 
 ``` r
@@ -375,15 +376,15 @@ str(exoplanetData)
 head(exoplanetData, n = 5) %>% knitr::kable()
 ```
 
-| pl\_name              | disc\_year | discoverymethod | pl\_orbper | pl\_rade | pl\_bmasse | pl\_radj | pl\_bmassj | pl\_eqt | pl\_dens | st\_spectype | st\_teff | st\_lum | pl\_controv\_flag | pl\_orbeccen | pl\_orbsmax | st\_mass | st\_metratio | st\_met | sy\_snum | sy\_pnum | luminosityRatio |
-|:----------------------|-----------:|:----------------|-----------:|---------:|-----------:|---------:|-----------:|--------:|---------:|:-------------|---------:|--------:|------------------:|-------------:|------------:|---------:|:-------------|--------:|---------:|---------:|----------------:|
-| OGLE-2016-BLG-1227L b |       2020 | Microlensing    |         NA |    13.90 |      250.0 |    1.240 |    0.79000 |      NA |    0.512 | NA           |       NA |      NA |                 0 |           NA |      3.4000 |     0.10 | NA           |      NA |        1 |        1 |              NA |
-| GJ 480 b              |       2020 | Radial Velocity |   9.567000 |     3.69 |       13.2 |    0.330 |    0.04153 |      NA |    1.440 | M3.5 Ve      |     3381 |  -1.612 |                 0 |          0.1 |      0.0680 |     0.45 | NA           |      NA |        1 |        1 |       0.0244343 |
-| Kepler-276 c          |       2013 | Transit         |  31.884000 |     2.90 |       16.6 |    0.259 |    0.05200 |     563 |    3.740 | NA           |     5779 |  -0.089 |                 0 |          0.0 |      0.1994 |     1.10 | \[Fe/H\]     |    0.02 |        1 |        3 |       0.8147043 |
-| Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 |       1.0964782 |
-| K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |       0.2992265 |
+| pl\_name              | disc\_year | discoverymethod | pl\_orbper | pl\_rade | pl\_bmasse | pl\_radj | pl\_bmassj | pl\_eqt | pl\_dens | st\_spectype | st\_teff | st\_lum | pl\_controv\_flag | pl\_orbeccen | pl\_orbsmax | st\_mass | st\_metratio | st\_met | sy\_snum | sy\_pnum |  sy\_dist | luminosityRatio |
+|:----------------------|-----------:|:----------------|-----------:|---------:|-----------:|---------:|-----------:|--------:|---------:|:-------------|---------:|--------:|------------------:|-------------:|------------:|---------:|:-------------|--------:|---------:|---------:|----------:|----------------:|
+| OGLE-2016-BLG-1227L b |       2020 | Microlensing    |         NA |    13.90 |      250.0 |    1.240 |    0.79000 |      NA |    0.512 | NA           |       NA |      NA |                 0 |           NA |      3.4000 |     0.10 | NA           |      NA |        1 |        1 |        NA |              NA |
+| GJ 480 b              |       2020 | Radial Velocity |   9.567000 |     3.69 |       13.2 |    0.330 |    0.04153 |      NA |    1.440 | M3.5 Ve      |     3381 |  -1.612 |                 0 |          0.1 |      0.0680 |     0.45 | NA           |      NA |        1 |        1 |   14.2358 |       0.0244343 |
+| Kepler-276 c          |       2013 | Transit         |  31.884000 |     2.90 |       16.6 |    0.259 |    0.05200 |     563 |    3.740 | NA           |     5779 |  -0.089 |                 0 |          0.0 |      0.1994 |     1.10 | \[Fe/H\]     |    0.02 |        1 |        3 | 1144.8600 |       0.8147043 |
+| Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 | 1073.7600 |       1.0964782 |
+| K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |  402.9150 |       0.2992265 |
 
-As of Wed Oct 6 15:09:42 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 17:18:20 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. We can
@@ -437,7 +438,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -481,50 +482,50 @@ al., 2011).
 circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1)
 
 # Display in a matrix with "ncol = ..." columns
-matrix(circumbinaryPlanets$pl_name, ncol = 3)
+matrix(circumbinaryPlanets$pl_name, nrow = 13, byrow = TRUE)
 ```
 
-    ##       [,1]                          
-    ##  [1,] "NSVS 14256825 b"             
-    ##  [2,] "RR Cae b"                    
-    ##  [3,] "2MASS J19383260+4603591 b"   
-    ##  [4,] "SR 12 AB c"                  
-    ##  [5,] "MXB 1658-298 b"              
-    ##  [6,] "Kepler-1647 b"               
-    ##  [7,] "VHS J125601.92-125723.9 b"   
-    ##  [8,] "2MASS J01033563-5515561 AB b"
-    ##  [9,] "Kepler-453 b"                
-    ## [10,] "Kepler-35 b"                 
-    ## [11,] "Kepler-47 c"                 
-    ## [12,] "Kepler-47 b"                 
-    ## [13,] "NY Vir b"                    
-    ##       [,2]                      
-    ##  [1,] "NY Vir c"                
-    ##  [2,] "DP Leo b"                
-    ##  [3,] "HIP 79098 AB b"          
-    ##  [4,] "KIC 5095269 b"           
-    ##  [5,] "Kepler-16 b"             
-    ##  [6,] "Kepler-1661 b"           
-    ##  [7,] "NN Ser d"                
-    ##  [8,] "ROXs 42 B b"             
-    ##  [9,] "OGLE-2016-BLG-0613L AB b"
-    ## [10,] "UZ For c"                
-    ## [11,] "DE CVn b"                
-    ## [12,] "HD 202206 c"             
-    ## [13,] "OGLE-2018-BLG-1700L b"   
-    ##       [,3]                     
-    ##  [1,] "PH1 b"                  
-    ##  [2,] "OGLE-2007-BLG-349L AB c"
-    ##  [3,] "Ross 458 c"             
-    ##  [4,] "NN Ser c"               
-    ##  [5,] "TOI-1338 b"             
-    ##  [6,] "Kepler-413 b"           
-    ##  [7,] "Kepler-47 d"            
-    ##  [8,] "HW Vir b"               
-    ##  [9,] "PSR B1620-26 b"         
-    ## [10,] "Kepler-34 b"            
-    ## [11,] "UZ For b"               
-    ## [12,] "Kepler-38 b"            
+    ##       [,1]                       
+    ##  [1,] "NSVS 14256825 b"          
+    ##  [2,] "SR 12 AB c"               
+    ##  [3,] "VHS J125601.92-125723.9 b"
+    ##  [4,] "Kepler-35 b"              
+    ##  [5,] "NY Vir b"                 
+    ##  [6,] "HIP 79098 AB b"           
+    ##  [7,] "Kepler-1661 b"            
+    ##  [8,] "OGLE-2016-BLG-0613L AB b" 
+    ##  [9,] "HD 202206 c"              
+    ## [10,] "OGLE-2007-BLG-349L AB c"  
+    ## [11,] "TOI-1338 b"               
+    ## [12,] "HW Vir b"                 
+    ## [13,] "UZ For b"                 
+    ##       [,2]                          
+    ##  [1,] "RR Cae b"                    
+    ##  [2,] "MXB 1658-298 b"              
+    ##  [3,] "2MASS J01033563-5515561 AB b"
+    ##  [4,] "Kepler-47 c"                 
+    ##  [5,] "NY Vir c"                    
+    ##  [6,] "KIC 5095269 b"               
+    ##  [7,] "NN Ser d"                    
+    ##  [8,] "UZ For c"                    
+    ##  [9,] "OGLE-2018-BLG-1700L b"       
+    ## [10,] "Ross 458 c"                  
+    ## [11,] "Kepler-413 b"                
+    ## [12,] "PSR B1620-26 b"              
+    ## [13,] "Kepler-38 b"                 
+    ##       [,3]                       
+    ##  [1,] "2MASS J19383260+4603591 b"
+    ##  [2,] "Kepler-1647 b"            
+    ##  [3,] "Kepler-453 b"             
+    ##  [4,] "Kepler-47 b"              
+    ##  [5,] "DP Leo b"                 
+    ##  [6,] "Kepler-16 b"              
+    ##  [7,] "ROXs 42 B b"              
+    ##  [8,] "DE CVn b"                 
+    ##  [9,] "PH1 b"                    
+    ## [10,] "NN Ser c"                 
+    ## [11,] "Kepler-47 d"              
+    ## [12,] "Kepler-34 b"              
     ## [13,] "TIC 172900988 b"
 
 They are presented in the table above for completeness but, to reduce
@@ -533,9 +534,9 @@ the `annualExoDiscoveries()` function.
 
 ### Discovery methods
 
-Each exoplanet observation method excels in specific scenarios. The
-transit and radial velocity detection methods favor planets which orbit
-their star at an average distance of 0.12-1.6 AU.
+Exoplanet observation methods excel under specific conditions. Direct
+imaging, for instance, requires planets to be relatively far from their
+star in order for stellar brightness not to overwhelm planetary dimness.
 
 ``` r
 # Subset data to include only detection methods with a relatively large number
@@ -543,7 +544,7 @@ their star at an average distance of 0.12-1.6 AU.
 extendedDiscoveryProp <- exoplanetData
 extendedDiscoveryProp <- extendedDiscoveryProp %>% 
   filter(discoverymethod %in% c("Transit", "Radial Velocity", "Microlensing", "Imaging") &
-           !is.na(pl_orbsmax))
+           !is.na(pl_orbsmax) & !is.na(sy_dist))
 
 # Display mean and median semi-major axes (in units of AU) for 
 # planets observed by these methods
@@ -556,34 +557,42 @@ knitr::kable(discoverySummaries,
 
 | Discovery method | Mean SMA (AU) | Median SMA (AU) |
 |:-----------------|--------------:|----------------:|
-| Imaging          |   607.8113636 |        181.0000 |
-| Microlensing     |     2.6661518 |          2.2500 |
-| Radial Velocity  |     1.6044780 |          1.0200 |
-| Transit          |     0.1261318 |          0.0788 |
+| Imaging          |   617.2953488 |       162.00000 |
+| Microlensing     |     2.6744455 |         2.25000 |
+| Radial Velocity  |     1.6044780 |         1.02000 |
+| Transit          |     0.1261105 |         0.07875 |
 
-Direct imaging, on the other hand, requires planets to be relatively far
-from a star in order for the stellar brightness not to overwhelm the
-planetary dimness. In this data set, the median distance for a planet
-that was directly observed is 162 AU. The boxplot below shows the
-distribution of semi-major axes for four of the most productive
-exoplanet observation methods.
+The transit, radial velocity, and microlensing methods favor the
+detection of planets which orbit their star at an average distance of
+0.1- 2.7 AU. For direct observations, the median semi-major axis for
+planets is 162 AU. The fact that the mean is 3.8 times higher than the
+median indicates the presence of outliers at substantially higher
+separations from their star.
+
+The boxplot below shows another distinction between the observation
+methods. Compared to radial velocity and direct imaging, detection
+through microlensing captures planets at a median distance that is over
+one hundred times higher from our solar system.
 
 ``` r
+# Boxplot, four most prolific discovery methods and quantitative summaries for
+# distances (in parsecs) to the observed planets
 orbsmaxBoxPlot <- ggplot(extendedDiscoveryProp, 
-                         aes(x = discoverymethod, y = pl_orbsmax,
+                         aes(x = discoverymethod, y = sy_dist,
                              fill = discoverymethod))
+
 orbsmaxBoxPlot + geom_boxplot() +
   # Remove legend after coloration
   theme(legend.position = "none") +
   scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
-  labs(x = "Discovery method", y = "Orbit semi-major axis (log)",
-       title = "Distribution of semi-major axes for various discovery methods") +
+  labs(x = "Discovery method", y = "Distance (log(pc))",
+       title = "Detection methods and \n summary of distances to the planetary systems") +
   # Add log ticks to left side
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -618,7 +627,7 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
     ## Warning: Removed 17 rows containing missing
     ## values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -640,7 +649,7 @@ metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
 metallicityData %>% mutate(giantPlFlag = NA)
 ```
 
-    ## # A tibble: 3,459 × 23
+    ## # A tibble: 3,459 × 24
     ##    pl_name      disc_year discoverymethod
     ##    <chr>            <int> <chr>          
     ##  1 Kepler-276 c      2013 Transit        
@@ -653,7 +662,7 @@ metallicityData %>% mutate(giantPlFlag = NA)
     ##  8 HIP 12961 b       2010 Radial Velocity
     ##  9 XO-5 b            2008 Transit        
     ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,449 more rows, and 20 more
+    ## # … with 3,449 more rows, and 21 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
     ## #   pl_radj <dbl>, pl_bmassj <dbl>,
@@ -683,7 +692,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -697,7 +706,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -737,7 +746,7 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
     ## Warning: Removed 7 rows containing non-finite
     ## values (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -771,7 +780,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
     ## Warning: Removed 24 rows containing missing
     ## values (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ### Exoplanet habitability
 
@@ -816,7 +825,7 @@ planetData <- hzFluxCalculator(planetData)
 head(planetData, n = 10)
 ```
 
-    ## # A tibble: 10 × 27
+    ## # A tibble: 10 × 28
     ##    pl_name    disc_year discoverymethod
     ##    <chr>          <int> <chr>          
     ##  1 OGLE-2016…      2020 Microlensing   
@@ -829,7 +838,7 @@ head(planetData, n = 10)
     ##  8 HD 149143…      2005 Radial Velocity
     ##  9 HD 210702…      2007 Radial Velocity
     ## 10 HIP 12961…      2010 Radial Velocity
-    ## # … with 24 more variables:
+    ## # … with 25 more variables:
     ## #   pl_orbper <dbl>, pl_rade <dbl>,
     ## #   pl_bmasse <dbl>, pl_radj <dbl>,
     ## #   pl_bmassj <dbl>, pl_eqt <dbl>,
