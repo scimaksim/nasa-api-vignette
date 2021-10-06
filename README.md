@@ -169,28 +169,26 @@ calculateHZ <- function(tempEff, luminosityRatio){
   
   t_star <- tempEff-5780
   
-  
   for (i in 1:length(a)){
     # Calculate effective solar flux (s_eff) using formula
     # from research paper by Kopparapu et al.
     s_eff[i] <- s_eff_sun[i] + 
       a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
     
+    optimisticInnerFlux <- s_eff[1]
+    optimisticOuterFlux <- s_eff[4]
+    
     # Calculate corresponding inner/outer habitability zone distances
     distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
     
     optimisticInnerDist <- distanceFromStar[1]
     optimisticOuterDist <- distanceFromStar[4]
-    
-    # Calculate effective solar flux incident on the planet
-    optimisticInnerFlux <- s_eff[1]
-    optimisticOuterFlux <- s_eff[4]
-    
-    return(list(optimisticInnerDist = optimisticInnerDist, 
-                optimisticOuterDist = optimisticOuterDist, 
-                optimisticInnerFlux = optimisticInnerFlux, 
-                optimisticOuterFlux = optimisticOuterFlux))
   }
+  
+  return(list(optimisticInnerDist = optimisticInnerDist, 
+              optimisticOuterDist = optimisticOuterDist, 
+              optimisticInnerFlux = optimisticInnerFlux, 
+              optimisticOuterFlux = optimisticOuterFlux))
 }
 ```
 
@@ -384,7 +382,7 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 | 1073.7600 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |  402.9150 |       0.2992265 |
 
-As of Wed Oct 6 17:18:20 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 18:09:07 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. We can
@@ -438,7 +436,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -587,12 +585,12 @@ orbsmaxBoxPlot + geom_boxplot() +
   scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
   labs(x = "Discovery method", y = "Distance (log(pc))",
-       title = "Detection methods and \n summary of distances to the planetary systems") +
+       title = "Detection methods and \n summary of distances to exoplanetary systems") +
   # Add log ticks to left side
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -624,10 +622,10 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
        shape = "Discovery method") 
 ```
 
-    ## Warning: Removed 17 rows containing missing
-    ## values (geom_point).
+    ## Warning: Removed 17 rows containing
+    ## missing values (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 ### Metallicity correlations
 
@@ -650,25 +648,25 @@ metallicityData %>% mutate(giantPlFlag = NA)
 ```
 
     ## # A tibble: 3,459 × 24
-    ##    pl_name      disc_year discoverymethod
-    ##    <chr>            <int> <chr>          
-    ##  1 Kepler-276 c      2013 Transit        
-    ##  2 Kepler-829 b      2016 Transit        
-    ##  3 K2-283 b          2018 Transit        
-    ##  4 Kepler-477 b      2016 Transit        
-    ##  5 HAT-P-15 b        2010 Transit        
-    ##  6 HD 149143 b       2005 Radial Velocity
-    ##  7 HD 210702 b       2007 Radial Velocity
-    ##  8 HIP 12961 b       2010 Radial Velocity
-    ##  9 XO-5 b            2008 Transit        
-    ## 10 HD 5608 b         2012 Radial Velocity
-    ## # … with 3,449 more rows, and 21 more
-    ## #   variables: pl_orbper <dbl>,
-    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
-    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
-    ## #   pl_eqt <dbl>, pl_dens <dbl>,
-    ## #   st_spectype <chr>, st_teff <dbl>,
-    ## #   st_lum <dbl>, …
+    ##    pl_name      disc_year
+    ##    <chr>            <int>
+    ##  1 Kepler-276 c      2013
+    ##  2 Kepler-829 b      2016
+    ##  3 K2-283 b          2018
+    ##  4 Kepler-477 b      2016
+    ##  5 HAT-P-15 b        2010
+    ##  6 HD 149143 b       2005
+    ##  7 HD 210702 b       2007
+    ##  8 HIP 12961 b       2010
+    ##  9 XO-5 b            2008
+    ## 10 HD 5608 b         2012
+    ## # … with 3,449 more rows, and 22
+    ## #   more variables:
+    ## #   discoverymethod <chr>,
+    ## #   pl_orbper <dbl>,
+    ## #   pl_rade <dbl>,
+    ## #   pl_bmasse <dbl>,
+    ## #   pl_radj <dbl>, …
 
 ``` r
 for (i in 1:length(metallicityData$pl_name)){
@@ -692,7 +690,7 @@ metallicityHisto + geom_histogram(aes(y = ..density..,
   geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
 
 An empirical cumulative distribution function affirms that, while 50% of
 sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
@@ -706,7 +704,7 @@ metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
      y = "ECDF", x="[Fe/H]", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -740,13 +738,14 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
   geom_density()
 ```
 
-    ## Warning: Removed 7 rows containing non-finite
-    ## values (stat_bin).
+    ## Warning: Removed 7 rows containing
+    ## non-finite values (stat_bin).
 
-    ## Warning: Removed 7 rows containing non-finite
-    ## values (stat_density).
+    ## Warning: Removed 7 rows containing
+    ## non-finite values
+    ## (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
 
 By combining radii with the masses of planets, we can produce a
 mass-radius diagram and calculate planetary densities. From this
@@ -774,13 +773,14 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
    labels = scales::trans_format("log10", scales::math_format(10^.x)))
 ```
 
-    ## Warning: Removed 94 rows containing missing
-    ## values (geom_point).
+    ## Warning: Removed 94 rows containing
+    ## missing values (geom_point).
 
-    ## Warning: Removed 24 rows containing missing
-    ## values (geom_text_repel).
+    ## Warning: Removed 24 rows containing
+    ## missing values
+    ## (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
 
 ### Exoplanet habitability
 
@@ -822,29 +822,29 @@ planetData <- exoplanetData
 # and the solar flux incident on each exoplanet
 planetData <- hzFluxCalculator(planetData)
 
-head(planetData, n = 10)
+head(planetData, n = 1000)
 ```
 
-    ## # A tibble: 10 × 28
-    ##    pl_name    disc_year discoverymethod
-    ##    <chr>          <int> <chr>          
-    ##  1 OGLE-2016…      2020 Microlensing   
-    ##  2 GJ 480 b        2020 Radial Velocity
-    ##  3 Kepler-27…      2013 Transit        
-    ##  4 Kepler-82…      2016 Transit        
-    ##  5 K2-283 b        2018 Transit        
-    ##  6 Kepler-47…      2016 Transit        
-    ##  7 HAT-P-15 b      2010 Transit        
-    ##  8 HD 149143…      2005 Radial Velocity
-    ##  9 HD 210702…      2007 Radial Velocity
-    ## 10 HIP 12961…      2010 Radial Velocity
-    ## # … with 25 more variables:
-    ## #   pl_orbper <dbl>, pl_rade <dbl>,
-    ## #   pl_bmasse <dbl>, pl_radj <dbl>,
-    ## #   pl_bmassj <dbl>, pl_eqt <dbl>,
-    ## #   pl_dens <dbl>, st_spectype <chr>,
-    ## #   st_teff <dbl>, st_lum <dbl>,
-    ## #   pl_controv_flag <int>, …
+    ## # A tibble: 1,000 × 28
+    ##    pl_name               disc_year
+    ##    <chr>                     <int>
+    ##  1 OGLE-2016-BLG-1227L b      2020
+    ##  2 GJ 480 b                   2020
+    ##  3 Kepler-276 c               2013
+    ##  4 Kepler-829 b               2016
+    ##  5 K2-283 b                   2018
+    ##  6 Kepler-477 b               2016
+    ##  7 HAT-P-15 b                 2010
+    ##  8 HD 149143 b                2005
+    ##  9 HD 210702 b                2007
+    ## 10 HIP 12961 b                2010
+    ## # … with 990 more rows, and 26
+    ## #   more variables:
+    ## #   discoverymethod <chr>,
+    ## #   pl_orbper <dbl>,
+    ## #   pl_rade <dbl>,
+    ## #   pl_bmasse <dbl>,
+    ## #   pl_radj <dbl>, …
 
 Next, we supply this data frame to the `habitableExoFinder()` function
 alongside our criteria for habitability. In the code chunk below, we use
@@ -859,11 +859,27 @@ listHabitablePlanets <- habitableExoFinder(planetData, minTemp = 181, maxTemp = 
 knitr::kable(listHabitablePlanets)
 ```
 
-| pl\_name | pl\_eqt | spectralClass | pl\_bmasse | pl\_rade | pl\_orbeccen | pl\_orbsmax | innerHZ | outerHZ | innerFlux | outerFlux |
-|:---------|--------:|:--------------|-----------:|---------:|-------------:|------------:|--------:|--------:|----------:|----------:|
+| pl\_name           | pl\_eqt | spectralClass | pl\_bmasse | pl\_rade | pl\_orbeccen | pl\_orbsmax |   innerHZ |   outerHZ | innerFlux | outerFlux |
+|:-------------------|--------:|:--------------|-----------:|---------:|-------------:|------------:|----------:|----------:|----------:|----------:|
+| GJ 180 c           |      NA | M             |      6.400 |    2.410 |        0.090 |    0.129000 | 0.0934020 | 0.2439176 |  1.490349 | 0.2185313 |
+| GJ 433 d           |      NA | M             |      5.223 |    2.140 |        0.070 |    0.178000 | 0.1497641 | 0.3893868 |  1.493428 | 0.2209213 |
+| GJ 832 c           |      NA | M             |      5.400 |    2.180 |        0.180 |    0.163000 | 0.1319321 | 0.3428377 |  1.493823 | 0.2212192 |
+| Wolf 1061 c        |      NA | M             |      3.410 |    1.660 |        0.110 |    0.089000 | 0.0827929 | 0.2165173 |  1.489407 | 0.2177783 |
+| GJ 682 b           |      NA | M             |      4.400 |    1.930 |        0.080 |    0.080000 | 0.0367596 | 0.0975721 |  1.479991 | 0.2100624 |
+| K2-288 B b         |  226.36 | M             |      4.270 |    1.900 |           NA |    0.164000 | 0.0888174 | 0.2322835 |  1.489375 | 0.2177525 |
+| Proxima Cen b      |  234.00 | M             |      1.270 |    1.080 |        0.350 |    0.048500 | 0.0323426 | 0.0857610 |  1.480643 | 0.2105817 |
+| GJ 273 b           |      NA | M             |      2.890 |    1.510 |        0.100 |    0.091101 | 0.0767897 | 0.2004276 |  1.490712 | 0.2188190 |
+| GJ 163 c           |      NA | M             |      6.800 |    2.500 |        0.099 |    0.125400 | 0.1144725 | 0.2970570 |  1.494849 | 0.2219834 |
+| GJ 667 C c         |      NA | M             |      3.800 |    1.770 |        0.020 |    0.125000 | 0.0959303 | 0.2507763 |  1.489665 | 0.2179853 |
+| GJ 1061 c          |      NA | M             |      1.740 |    1.180 |        0.290 |    0.035000 | 0.0339003 | 0.0902913 |  1.477721 | 0.2083091 |
+| Teegarden’s Star c |      NA | M             |      1.110 |    1.040 |        0.000 |    0.044300 | 0.0222295 | 0.0593377 |  1.476180 | 0.2071754 |
+| TOI-700 d          |  268.80 | M             |      1.570 |    1.144 |        0.111 |    0.163300 | 0.1245684 | 0.3238778 |  1.493428 | 0.2209213 |
+| GJ 1061 d          |      NA | M             |      1.640 |    1.160 |        0.530 |    0.054000 | 0.0339003 | 0.0902913 |  1.477721 | 0.2083091 |
+| Teegarden’s Star b |      NA | M             |      1.050 |    1.020 |        0.000 |    0.025200 | 0.0222295 | 0.0593377 |  1.476180 | 0.2071754 |
+| GJ 357 d           |  219.60 | M             |      6.100 |    2.340 |           NA |    0.204000 | 0.1031987 | 0.2677352 |  1.495036 | 0.2221208 |
 
 Our combination of habitable zone distances, incident flux, effective
-temperatures, planet masses, and planet radii yield 0 potentially
+temperatures, planet masses, and planet radii yield 16 potentially
 habitable exoplanets.
 
 ## References

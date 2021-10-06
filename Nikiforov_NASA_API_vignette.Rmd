@@ -124,28 +124,26 @@ calculateHZ <- function(tempEff, luminosityRatio){
   
   t_star <- tempEff-5780
   
-  
   for (i in 1:length(a)){
     # Calculate effective solar flux (s_eff) using formula
     # from research paper by Kopparapu et al.
     s_eff[i] <- s_eff_sun[i] + 
       a[i]*t_star + b[i]*t_star^2 + c[i]*t_star^3 + d[i]*t_star^4
     
+    optimisticInnerFlux <- s_eff[1]
+    optimisticOuterFlux <- s_eff[4]
+    
     # Calculate corresponding inner/outer habitability zone distances
     distanceFromStar[i] <- (luminosityRatio/s_eff[i])^0.5
     
     optimisticInnerDist <- distanceFromStar[1]
     optimisticOuterDist <- distanceFromStar[4]
-    
-    # Calculate effective solar flux incident on the planet
-    optimisticInnerFlux <- s_eff[1]
-    optimisticOuterFlux <- s_eff[4]
-    
-    return(list(optimisticInnerDist = optimisticInnerDist, 
-                optimisticOuterDist = optimisticOuterDist, 
-                optimisticInnerFlux = optimisticInnerFlux, 
-                optimisticOuterFlux = optimisticOuterFlux))
   }
+  
+  return(list(optimisticInnerDist = optimisticInnerDist, 
+              optimisticOuterDist = optimisticOuterDist, 
+              optimisticInnerFlux = optimisticInnerFlux, 
+              optimisticOuterFlux = optimisticOuterFlux))
 }
 ```
 
@@ -381,7 +379,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x),
    labels = scales::trans_format("log10", scales::math_format(10^.x))) +
   labs(x = "Discovery method", y = "Distance (log(pc))",
-       title = "Detection methods and \n summary of distances to the planetary systems") +
+       title = "Detection methods and \n summary of distances to exoplanetary systems") +
   # Add log ticks to left side
   annotation_logticks(sides="l")
 ```
@@ -520,7 +518,7 @@ planetData <- exoplanetData
 # and the solar flux incident on each exoplanet
 planetData <- hzFluxCalculator(planetData)
 
-head(planetData, n = 10)
+head(planetData, n = 1000)
 ```
 
 Next, we supply this data frame to the `habitableExoFinder()` function alongside our criteria for habitability. In the code chunk below, we use effective temperatures in the range of $181-279$ Kelvin and planet radii in the range of $2.5-10 R \oplus$. 
