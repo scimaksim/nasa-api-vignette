@@ -1,6 +1,7 @@
 NASA API Vignette
 ================
 
+-   [Introduction](#introduction)
 -   [Package requirements](#package-requirements)
 -   [Custom functions](#custom-functions)
     -   [annualExoDiscoveries()](#annualexodiscoveries)
@@ -15,9 +16,18 @@ NASA API Vignette
     -   [Exoplanet habitability](#exoplanet-habitability)
 -   [References](#references)
 
+## Introduction
+
+This vignette has made use of the [NASA Exoplanet
+Archive](https://exoplanetarchive.ipac.caltech.edu/docs/intro.html),
+which is operated by the California Institute of Technology, under
+contract with the National Aeronautics and Space Administration under
+the Exoplanet Exploration Program (NASA Exoplanet Science Institute
+(2020)).
+
 ## Package requirements
 
-To re-create this vignette in R, users are required to install:
+To re-create this project in R, users are required to install:
 
 -   **[tidyverse](https://www.tidyverse.org/)** - encompasses packages
     such as `dplyr` for subsetting data and `ggplot2` for creating
@@ -323,7 +333,9 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 ### Annual discoveries
 
 The `annualExoDiscoveries()` function retrieves the latest exoplanet
-data from NASA’s Exoplanet Archive.
+data from NASA’s Exoplanet Archive. By default, the function excludes
+bodies which have had their planetary status “questioned in the
+published literature.”
 
 ``` r
 # Retrieve latest exoplanet data
@@ -378,7 +390,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Tue Oct 5 21:29:05 2021, the NASA Exoplanet Archive’s [Planetary
+As of Tue Oct 5 21:43:14 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -842,6 +854,13 @@ Journal*, *787*(2), L29. <https://doi.org/10.1088/2041-8205/787/2/l29>
 Kuchner, M. J. (2003). Volatile-rich earth-mass planets in the habitable
 zone. *The Astrophysical Journal*, *596*(1), l105–l108.
 <https://doi.org/10.1086/378397>
+
+</div>
+
+<div id="ref-https://doi.org/10.26133/nea13" class="csl-entry">
+
+NASA Exoplanet Science Institute. (2020). *Planetary systems composite
+table*. IPAC. <https://doi.org/10.26133/NEA13>
 
 </div>
 
