@@ -266,7 +266,9 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 
 ### Annual discoveries and system properties
 
-The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. A preview of the generated data frame is shown below.  
+The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exoplanet Archive. By default, the function targets the Planetary Systems Composite Parameters Table (`tableName = "pscomppars"`) and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13). 
+
+A preview of the generated data frame is shown below.  
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Retrieve latest exoplanet data
@@ -276,9 +278,7 @@ str(exoplanetData)
 # Display the first five rows of data
 head(exoplanetData, n = 5) %>% knitr::kable()
 ```
-As of `r date()`, the archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetData$pl_name)` confirmed exoplanet observations. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13). Moreover, to refrain from complex orbital mechanics, the function also excludes circumbinary systems - ones in which planets orbit two stars.  
-
-We can compare the composition of extrasolar systems against that of our own, with its one star and eight planets. 
+As of `r date()`, the archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetData$pl_name)` confirmed exoplanet observations. We can compare the composition of their extrasolar systems against that of our own. 
 
 ```{r , echo=TRUE, eval=TRUE, rows.print=10}
 # Two-way contingency table
@@ -287,9 +287,9 @@ starPlanetFreq <- table(exoplanetData$sy_snum, exoplanetData$sy_pnum)
 starPlanetFreq
 ```
 
-`r starPlanetFreq[1, 1]` systems - more than `r round((starPlanetFreq[1, 1])/(length(exoplanetData$pl_name))*100, 1)`% of all observed - orbit a single star and have no other planetary companions. Another `r starPlanetFreq[1, 2]` systems (`r round((starPlanetFreq[1, 2])/(length(exoplanetData$pl_name))*100, 1)`%) have one star and two planets. `r starPlanetFreq[3, 5]` systems are particularly interesting, with three stars and five planets in their system. One observations contains a planet with a record four stars. 
+`r starPlanetFreq[1, 1]` planets - more than `r round((starPlanetFreq[1, 1])/(length(exoplanetData$pl_name))*100, 1)`% of all observed - orbit a single star and have no other planetary companions. Another `r starPlanetFreq[1, 2]` planets (`r round((starPlanetFreq[1, 2])/(length(exoplanetData$pl_name))*100, 1)`%) have one star and two companion planets. `r starPlanetFreq[3, 5]` systems are particularly interesting, with three stars and five planets in their system. One observations contains a planet with a record four stars. 
 
-We can also enumerate the annual number of exoplanet findings since 1989 and identify 2014 and 2016 as the most prolific years for discovery.  
+We can also enumerate the annual number of exoplanet findings since 1989.   
 
 ```{r , echo=TRUE, eval=TRUE}
 # Retrieve latest exoplanet data
@@ -327,19 +327,20 @@ knitr::kable(discoveriesByMethod,
 ```
 
 
-Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[9])/(length(exoplanetData$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[8])/(length(exoplanetData$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
+2014 and 2016 appear as the most prolific years for discovery. Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[9])/(length(exoplanetData$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[8])/(length(exoplanetData$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
 
+The data frame below contains the names of planets which are thought to orbit two or more stars - the so-called "circumbinary planets" [@kepler-16]. 
 
 ```{r , echo=TRUE, eval=TRUE}
 circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1) 
-circumbinaryPlanets
+circumbinaryPlanets$pl_name
 ```
 
-The table above lists `r `length(binaryStarPlanets$pl_name)` planets which are thought to orbit two or more stars - the so-called "circumbinary planets" [@kepler-16]. They are presented in the table above for completeness but, to reduce the complexity of two-body problems, they are otherwise excluded by default from the `annualExoDiscoveries()` function. 
+They are presented in the table above for completeness but, to reduce the complexity of two-body problems, they are excluded by default from the `annualExoDiscoveries()` function. 
 
 ### Discovery methods
 
-Each observation method excels in specific scenarios. The transit and radial velocity detection methods favor planets which orbit their star at an average distance of 0.12-1.6 AU.  
+Each exoplanet observation method excels in specific scenarios. The transit and radial velocity detection methods favor planets which orbit their star at an average distance of 0.12-1.6 AU.  
 
 ```{r , echo=TRUE, eval=TRUE}
 # Subset data to include only detection methods with a relatively large number

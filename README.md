@@ -333,8 +333,12 @@ habitableExoFinder <- function(data, minEarthMass = 0.1, maxEarthMass = 5,
 ### Annual discoveries and system properties
 
 The `annualExoDiscoveries()` function retrieves the latest data from
-NASA’s Exoplanet Archive. A preview of the generated data frame is shown
-below.
+NASA’s Exoplanet Archive. By default, the function targets the Planetary
+Systems Composite Parameters Table (`tableName = "pscomppars"`) and
+excludes bodies which have had their planetary status “questioned in the
+published literature” (NASA Exoplanet Science Institute (2020)).
+
+A preview of the generated data frame is shown below.
 
 ``` r
 # Retrieve latest exoplanet data
@@ -379,19 +383,12 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |       0.2992265 |
 
-As of Wed Oct 6 13:56:59 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 14:39:39 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
-(PSCompPars) table lists 4462 confirmed exoplanet observations. By
-default, the function targets the Planetary Systems Composite Parameters
-Table and excludes bodies which have had their planetary status
-“questioned in the published literature” (NASA Exoplanet Science
-Institute (2020)). Moreover, to refrain from complex orbital mechanics,
-the function also excludes circumbinary systems - ones in which planets
-orbit two stars.
-
-We can compare the composition of extrasolar systems against that of our
-own, with its one star and eight planets.
+(PSCompPars) table lists 4462 confirmed exoplanet observations. We can
+compare the composition of their extrasolar systems against that of our
+own.
 
 ``` r
 # Two-way contingency table
@@ -413,14 +410,14 @@ starPlanetFreq
     ##   3    0
     ##   4    0
 
-2312 systems - more than 51.8% of all observed - orbit a single star and
-have no other planetary companions. Another 950 systems (21.3%) have one
-star and two planets. 7 systems are particularly interesting, with three
-stars and five planets in their system. One observations contains a
-planet with a record four stars.
+2312 planets - more than 51.8% of all observed - orbit a single star and
+have no other planetary companions. Another 950 planets (21.3%) have one
+star and two companion planets. 7 systems are particularly interesting,
+with three stars and five planets in their system. One observations
+contains a planet with a record four stars.
 
-We can also enumerate the annual number of exoplanet findings since 1989
-and identify 2014 and 2016 as the most prolific years for discovery.
+We can also enumerate the annual number of exoplanet findings since
+1989.
 
 ``` r
 # Retrieve latest exoplanet data
@@ -473,47 +470,71 @@ knitr::kable(discoveriesByMethod,
 | Transit                       |      3398 |
 | Transit Timing Variations     |        22 |
 
-Of the known 4462 exoplanets, 76.2% were observed while transiting their
-host star and temporarily reducing its brightness. Another 19.5% were
+2014 and 2016 appear as the most prolific years for discovery. Of the
+known 4462 exoplanets, 76.2% were observed while transiting their host
+star and temporarily reducing its brightness. Another 19.5% were
 observed indirectly via the radial velocity method, whereby the planet
 and its star orbit around a common center of gravity and prompt
 noticeable Doppler shifts in the stellar spectrum.
 
+The data frame below contains the names of planets which are thought to
+orbit two or more stars - the so-called “circumbinary planets” (R. et
+al., 2011).
+
 ``` r
 circumbinaryPlanets <- annualExoDiscoveries(cb_flag = 1) 
-circumbinaryPlanets
+circumbinaryPlanets$pl_name
 ```
 
-    ## # A tibble: 39 × 22
-    ##    pl_name    disc_year discoverymethod
-    ##    <chr>          <int> <chr>          
-    ##  1 NSVS 1425…      2019 Eclipse Timing…
-    ##  2 RR Cae b        2012 Eclipse Timing…
-    ##  3 2MASS J19…      2015 Eclipse Timing…
-    ##  4 SR 12 AB c      2010 Imaging        
-    ##  5 MXB 1658-…      2017 Eclipse Timing…
-    ##  6 Kepler-16…      2016 Transit        
-    ##  7 VHS J1256…      2015 Imaging        
-    ##  8 2MASS J01…      2013 Imaging        
-    ##  9 Kepler-45…      2015 Transit        
-    ## 10 Kepler-35…      2011 Transit        
-    ## # … with 29 more rows, and 19 more
-    ## #   variables: pl_orbper <dbl>,
-    ## #   pl_rade <dbl>, pl_bmasse <dbl>,
-    ## #   pl_radj <dbl>, pl_bmassj <dbl>,
-    ## #   pl_eqt <dbl>, pl_dens <dbl>,
-    ## #   st_spectype <chr>, st_teff <dbl>,
-    ## #   st_lum <dbl>, …
+    ##  [1] "NSVS 14256825 b"             
+    ##  [2] "RR Cae b"                    
+    ##  [3] "2MASS J19383260+4603591 b"   
+    ##  [4] "SR 12 AB c"                  
+    ##  [5] "MXB 1658-298 b"              
+    ##  [6] "Kepler-1647 b"               
+    ##  [7] "VHS J125601.92-125723.9 b"   
+    ##  [8] "2MASS J01033563-5515561 AB b"
+    ##  [9] "Kepler-453 b"                
+    ## [10] "Kepler-35 b"                 
+    ## [11] "Kepler-47 c"                 
+    ## [12] "Kepler-47 b"                 
+    ## [13] "NY Vir b"                    
+    ## [14] "NY Vir c"                    
+    ## [15] "DP Leo b"                    
+    ## [16] "HIP 79098 AB b"              
+    ## [17] "KIC 5095269 b"               
+    ## [18] "Kepler-16 b"                 
+    ## [19] "Kepler-1661 b"               
+    ## [20] "NN Ser d"                    
+    ## [21] "ROXs 42 B b"                 
+    ## [22] "OGLE-2016-BLG-0613L AB b"    
+    ## [23] "UZ For c"                    
+    ## [24] "DE CVn b"                    
+    ## [25] "HD 202206 c"                 
+    ## [26] "OGLE-2018-BLG-1700L b"       
+    ## [27] "PH1 b"                       
+    ## [28] "OGLE-2007-BLG-349L AB c"     
+    ## [29] "Ross 458 c"                  
+    ## [30] "NN Ser c"                    
+    ## [31] "TOI-1338 b"                  
+    ## [32] "Kepler-413 b"                
+    ## [33] "Kepler-47 d"                 
+    ## [34] "HW Vir b"                    
+    ## [35] "PSR B1620-26 b"              
+    ## [36] "Kepler-34 b"                 
+    ## [37] "UZ For b"                    
+    ## [38] "Kepler-38 b"                 
+    ## [39] "TIC 172900988 b"
 
-The table above lists
-`r`length(binaryStarPlanets$pl\_name)`planets which are thought to orbit two or more stars - the so-called "circumbinary planets" [@kepler-16]. They are presented in the table above for completeness but, to reduce the complexity of two-body problems, they are otherwise excluded by default from the`annualExoDiscoveries()\`
-function.
+They are presented in the table above for completeness but, to reduce
+the complexity of two-body problems, they are excluded by default from
+the `annualExoDiscoveries()` function.
 
 ### Discovery methods
 
-Each observation method excels in specific scenarios. The transit and
-radial velocity detection methods favor planets which orbit their star
-at an average distance of 0.12-1.6 AU.
+Each exoplanet observation method excels in specific scenarios. The
+transit and radial velocity detection methods favor planets which orbit
+their star at an average distance of 0.12-1.6 AU.
 
 ``` r
 # Subset data to include only detection methods with a relatively large number
@@ -885,6 +906,17 @@ zone. *The Astrophysical Journal*, *596*(1), l105–l108.
 
 NASA Exoplanet Science Institute. (2020). *Planetary systems composite
 table*. IPAC. <https://doi.org/10.26133/NEA13>
+
+</div>
+
+<div id="ref-kepler-16" class="csl-entry">
+
+R., D. L., A., C. J., C., F. D., W., S. R., B., H. S., N., W. J., A., O.
+J., Andrej, P., F., W. W., N., Q. S., David, L., Guillermo, T., A., B.
+L., W., M. G., J., F. J., Avi, S., B., F. E., J., L. J., Darin, R., …
+Debra, F. (2011). Kepler-16: A transiting circumbinary planet \[Doi:
+10.1126/science.1210923\]. *Science*, *333*(6049), 1602–1606.
+<https://doi.org/10.1126/science.1210923>
 
 </div>
 
