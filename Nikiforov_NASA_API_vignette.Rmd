@@ -2,7 +2,7 @@
 title: "NASA API Vignette"
 always_allow_html: true
 output: 
-  html_document:
+  github_document:
     toc: true
     toc_depth: 4
     df_print: tibble
