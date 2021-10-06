@@ -2,7 +2,7 @@
 title: "NASA API Vignette"
 always_allow_html: true
 output: 
-  github_document:
+  html_document:
     toc: true
     toc_depth: 4
     df_print: tibble
@@ -20,6 +20,7 @@ library(httr)
 library(jsonlite)
 library(latex2exp)
 library(ggrepel)
+library(DT)
 ```
 
 ## Introduction
@@ -273,7 +274,7 @@ The `annualExoDiscoveries()` function retrieves the latest data from NASA's Exop
 exoplanetData <- annualExoDiscoveries()
 
 # List the variables and their properties
-as_tibble(exoplanetData)
+datatable(exoplanetData)
 ```
 As of `r date()`, the archive's [Planetary Systems Composite Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) (PSCompPars) table lists `r length(exoplanetData$pl_name)` confirmed exoplanet observations. By default, the function targets the Planetary Systems Composite Parameters Table and excludes bodies which have had their planetary status "questioned in the published literature" (@https://doi.org/10.26133/nea13). Moreover, to refrain from complex orbital mechanics, the function also excludes circumbinary systems - ones in which planets orbit two stars.  
 
@@ -286,7 +287,7 @@ starPlanetFreq <- table(exoplanetData$sy_snum, exoplanetData$sy_pnum)
 starPlanetFreq
 ```
 
-`r starPlanetFreq[1, 1]` systems - more than `r round((starPlanetFreq[1, 1])/(length(exoplanetCount$pl_name))*100, 1)`% of all observed - orbit a single star and have no other planetary companions. Another `r starPlanetFreq[1, 2]` systems (`r round((starPlanetFreq[1, 2])/(length(exoplanetCount$pl_name))*100, 1)`%) have one star and two planets. `r starPlanetFreq[3, 5]` systems are particularly interesting, with three stars and five planets in their system. One observations contains a planet with a record four stars. 
+`r starPlanetFreq[1, 1]` systems - more than `r round((starPlanetFreq[1, 1])/(length(exoplanetData$pl_name))*100, 1)`% of all observed - orbit a single star and have no other planetary companions. Another `r starPlanetFreq[1, 2]` systems (`r round((starPlanetFreq[1, 2])/(length(exoplanetData$pl_name))*100, 1)`%) have one star and two planets. `r starPlanetFreq[3, 5]` systems are particularly interesting, with three stars and five planets in their system. One observations contains a planet with a record four stars. 
 
 We can also enumerate the annual number of exoplanet findings since 1989 and identify 2014 and 2016 as the most prolific years for discovery.  
 
@@ -326,7 +327,7 @@ knitr::kable(discoveriesByMethod,
 ```
 
 
-Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[9])/(length(exoplanetCount$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[8])/(length(exoplanetCount$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
+Of the known `r length(annualDiscoveries$pl_name)` exoplanets, `r round((discoveriesByMethod[9])/(length(exoplanetData$pl_name))*100, 1)`% were observed while transiting their host star and temporarily reducing its brightness. Another `r round((discoveriesByMethod[8])/(length(exoplanetData$pl_name))*100, 1)`% were observed indirectly via the radial velocity method, whereby the planet and its star orbit around a common center of gravity and prompt noticeable Doppler shifts in the stellar spectrum. 
 
 
 ```{r , echo=TRUE, eval=TRUE}
@@ -491,7 +492,7 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
 
 ### Exoplanet habitability
 
-Among the `r length(exoplanetCount$pl_name)` exoplanets in the NASA Exoplanet Archive, which have the potential to harbor life? The [Planetary Habitability Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) (PHL) attempts to answer this by narrowing conditions such that
+Among the `r length(exoplanetData$pl_name)` exoplanets in the NASA Exoplanet Archive, which have the potential to harbor life? The [Planetary Habitability Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods) (PHL) attempts to answer this by narrowing conditions such that
 
 1. "The planet orbits an F, G, K, or M star".
 2. "The planet orbits within the optimistic habitable zone defined by @Kopparapu_2014". 
