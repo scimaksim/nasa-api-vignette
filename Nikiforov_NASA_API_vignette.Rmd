@@ -46,9 +46,9 @@ This custom function programmatically retrieves data from the [NASA Exoplanet Ar
 * `format = json` - return queries in JSON format. You may also request data as a comma-separated-value file (CSV). 
 
 ```{r , echo=TRUE, eval=TRUE}
-# Retrieve names, discovery year, discovery method and various other
+# Retrieve names, discovery years, discovery methods and various other
 # planetary and stellar parameters.
-# The default search begins in the year 1989 (earliest year in the pscomppars table)
+# The default search begins in 1989 (the earliest date in the pscomppars table)
 # and ends in the current calendar year: format(Sys.Date(), "%Y").
 annualExoDiscoveries <- function(tableName = "pscomppars", 
                                  startYear = 1989, 
@@ -81,17 +81,19 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
 
 ### calculateHZ()
 
-This function calculates exoplanetary habitable zones and their associated stellar flux boundaries for a star of effective temperature `tempEff` and a stellar luminosity `luminosityRatio`. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ is defined as $S_{eff}=S_{eff \odot} + (a \cdot T_{\star}) + (b \cdot T_{\star}^{2}) + (c \cdot T_{\star}^{3}) + (d \cdot T_{\star}^{4})$ and the corresponding habitability zone distances, $d$, are defined as $d = (L/L \odot)/(S_{eff})^{0.5}$ AU [@Kopparapu_2014]. The required parameters for this function are:
+This function calculates planetary habitable zones and their associated stellar flux boundaries for a host star with effective temperature `tempEff` and a stellar luminosity `luminosityRatio`. The calculations are based on formulae defined by Kopparapu et al., whereby the effective solar flux $S_{eff}$ equates to $S_{eff}=S_{eff \odot} + (a \cdot T_{\star}) + (b \cdot T_{\star}^{2}) + (c \cdot T_{\star}^{3}) + (d \cdot T_{\star}^{4})$ and the corresponding habitability zone distances, $d$, equate to $d = (L/L \odot)/(S_{eff})^{0.5}$ AU [@Kopparapu_2014]. 
 
-* `tempEff` - the effective temperature of a star. $T_{eff}$ is defined as the difference between `tempEff` ($T_{eff}$) and 5780 K, $T_{\star} = T_{eff} - 5780$. 
-* `luminosityRatio` - stellar luminosity, defined as the ratio $L/L \odot$. These values are calculated in the `annualExoDiscoveries` function by finding the inverse logarithm of `st_lum` (the stellar luminosity in the _PSCompPars_ table. The values in this vector are used to calculate the habiatability zone distances, $d$.
+The required parameters for this function are:
 
-The output of this function is a list with four numeric parameters - _optimisticInnerDist_, _optimisticOuterDist_, _optimisticInnerFlux_, and _optimisticOuterFlux_ - which are used in the function `hzFluxCalculator()`.
+* `tempEff` - the effective temperature of a host star such that $_{eff} - 5780 = T_{\star}$. 
+* `luminosityRatio` - stellar luminosity, $L/L \odot$, required to calculate habitability zone distances, $d$. These values may be calculated with the `annualExoDiscoveries()` function, which finds the inverse logarithm of the stellar luminosity in the _PSCompPars_ table (`st_lum`).
+
+The output of this function is a list with four numeric parameters - _optimisticInnerDist_, _optimisticOuterDist_, _optimisticInnerFlux_, and _optimisticOuterFlux_ - which may be used in the function `hzFluxCalculator()`.
 
 ```{r , echo=TRUE, eval=TRUE}
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
-# Distances returned in Astronomical Units (AU).
-# Formula and it coefficients provided by Kopparapu et al.
+# Distances are returned in Astronomical Units (AU).
+# Formula for s_eff and its coefficients is provided by Kopparapu et al.
 # https://iopscience.iop.org/article/10.1088/2041-8205/787/2/L29
 # Re-factored to R from John Armstrong's Python code at
 # https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
@@ -135,19 +137,11 @@ calculateHZ <- function(tempEff, luminosityRatio){
     optimisticInnerFlux <- s_eff[1]
     optimisticOuterFlux <- s_eff[4]
     
+    return(list(optimisticInnerDist = optimisticInnerDist, 
+                optimisticOuterDist = optimisticOuterDist, 
+                optimisticInnerFlux = optimisticInnerFlux, 
+                optimisticOuterFlux = optimisticOuterFlux))
   }
-  # 
-  # optimisticInnerDist <- distanceFromStar[1]
-  # optimisticOuterDist <- distanceFromStar[4]
-  # 
-  # # Calculate effective solar flux incident on the planet
-  # optimisticInnerFlux <- s_eff[1]
-  # optimisticOuterFlux <- s_eff[4]
-  
-  return(list(optimisticInnerDist = optimisticInnerDist, 
-              optimisticOuterDist = optimisticOuterDist, 
-              optimisticInnerFlux = optimisticInnerFlux, 
-              optimisticOuterFlux = optimisticOuterFlux))
 }
 ```
 
@@ -158,11 +152,11 @@ This custom function calculates the minima and the maxima for a planet's habitab
 * `earthMassCol = "pl_bmasse"` - a vector with planetary masses in units of Earth mass ($M \oplus$).
 * `starSpecTypeCol = "st_spectype"` - a vector listing the spectral type of host stars.
 * `effectiveTempCol = "st_teff"` - a vector listing the effective temperatures of host stars.
-* `luminosityRatioCol = "luminosityRatio"` - a vector with the stellar luminosity ratios, $L/L \odot}$. 
+* `luminosityRatioCol = "luminosityRatio"` - a vector with the stellar luminosity ratios, ${L/L \odot}$. 
 
 These default column names are based on the variables in the [Planetary Systems Composite Parameters (PSCompPars)](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html) table. The _spectralClass_ column uses the `substr()` function to distill the complete classification of a star into its main class (O, B, A, etc.). 
 
-Habitability zone distances and incident flux are calculated only for planets with a mass of $10 M \oplus$ or less. This is the hypothetical threshold for "planets composed substantially of volatiles" such as $H_{2}O$ and $NH_{3}$ [@pub.1058671435]. 
+Habitability zone distances and incident flux are calculated only for planets with a mass of $10 M \oplus$ or less. This is the hypothetical threshold for "planets composed substantially of volatiles" such as $H_{2}O$ and $N$$H_{3}$ [@pub.1058671435]. 
 
 ```{r , echo=TRUE, eval=TRUE}
 # Customer function to calculate values for 

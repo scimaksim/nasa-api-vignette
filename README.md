@@ -69,9 +69,9 @@ values for this function are:
     request data as a comma-separated-value file (CSV).
 
 ``` r
-# Retrieve names, discovery year, discovery method and various other
+# Retrieve names, discovery years, discovery methods and various other
 # planetary and stellar parameters.
-# The default search begins in the year 1989 (earliest year in the pscomppars table)
+# The default search begins in 1989 (the earliest date in the pscomppars table)
 # and ends in the current calendar year: format(Sys.Date(), "%Y").
 annualExoDiscoveries <- function(tableName = "pscomppars", 
                                  startYear = 1989, 
@@ -104,35 +104,35 @@ annualExoDiscoveries <- function(tableName = "pscomppars",
 
 ### calculateHZ()
 
-This function calculates exoplanetary habitable zones and their
-associated stellar flux boundaries for a star of effective temperature
+This function calculates planetary habitable zones and their associated
+stellar flux boundaries for a host star with effective temperature
 `tempEff` and a stellar luminosity `luminosityRatio`. The calculations
 are based on formulae defined by Kopparapu et al., whereby the effective
-solar flux *S*<sub>*e**f**f*</sub> is defined as
+solar flux *S*<sub>*e**f**f*</sub> equates to
 *S*<sub>*e**f**f*</sub> = *S*<sub>*e**f**f*⊙</sub> + (*a* ⋅ *T*<sub>⋆</sub>) + (*b* ⋅ *T*<sub>⋆</sub><sup>2</sup>) + (*c* ⋅ *T*<sub>⋆</sub><sup>3</sup>) + (*d* ⋅ *T*<sub>⋆</sub><sup>4</sup>)
-and the corresponding habitability zone distances, *d*, are defined as
+and the corresponding habitability zone distances, *d*, equate to
 *d* = (*L*/*L* ⊙ )/(*S*<sub>*e**f**f*</sub>)<sup>0.5</sup> AU (Kopparapu
-et al., 2014). The required parameters for this function are:
+et al., 2014).
 
--   `tempEff` - the effective temperature of a star.
-    *T*<sub>*e**f**f*</sub> is defined as the difference between
-    `tempEff` (*T*<sub>*e**f**f*</sub>) and 5780 K,
-    *T*<sub>⋆</sub> = *T*<sub>*e**f**f*</sub> − 5780.
--   `luminosityRatio` - stellar luminosity, defined as the ratio
-    *L*/*L*⊙. These values are calculated in the `annualExoDiscoveries`
-    function by finding the inverse logarithm of `st_lum` (the stellar
-    luminosity in the *PSCompPars* table. The values in this vector are
-    used to calculate the habiatability zone distances, *d*.
+The required parameters for this function are:
+
+-   `tempEff` - the effective temperature of a host star such that
+    <sub>*e**f**f*</sub> − 5780 = *T*<sub>⋆</sub>.
+-   `luminosityRatio` - stellar luminosity, *L*/*L*⊙, required to
+    calculate habitability zone distances, *d*. These values may be
+    calculated with the `annualExoDiscoveries()` function, which finds
+    the inverse logarithm of the stellar luminosity in the *PSCompPars*
+    table (`st_lum`).
 
 The output of this function is a list with four numeric parameters -
 *optimisticInnerDist*, *optimisticOuterDist*, *optimisticInnerFlux*, and
-*optimisticOuterFlux* - which are used in the function
+*optimisticOuterFlux* - which may be used in the function
 `hzFluxCalculator()`.
 
 ``` r
 # Calculate habitable stellar flux boundaries for exoplanetary habitable zones. 
-# Distances returned in Astronomical Units (AU).
-# Formula and it coefficients provided by Kopparapu et al.
+# Distances are returned in Astronomical Units (AU).
+# Formula for s_eff and its coefficients is provided by Kopparapu et al.
 # https://iopscience.iop.org/article/10.1088/2041-8205/787/2/L29
 # Re-factored to R from John Armstrong's Python code at
 # https://depts.washington.edu/naivpl/sites/default/files/hzcalc.py.txt
@@ -176,19 +176,11 @@ calculateHZ <- function(tempEff, luminosityRatio){
     optimisticInnerFlux <- s_eff[1]
     optimisticOuterFlux <- s_eff[4]
     
+    return(list(optimisticInnerDist = optimisticInnerDist, 
+                optimisticOuterDist = optimisticOuterDist, 
+                optimisticInnerFlux = optimisticInnerFlux, 
+                optimisticOuterFlux = optimisticOuterFlux))
   }
-  # 
-  # optimisticInnerDist <- distanceFromStar[1]
-  # optimisticOuterDist <- distanceFromStar[4]
-  # 
-  # # Calculate effective solar flux incident on the planet
-  # optimisticInnerFlux <- s_eff[1]
-  # optimisticOuterFlux <- s_eff[4]
-  
-  return(list(optimisticInnerDist = optimisticInnerDist, 
-              optimisticOuterDist = optimisticOuterDist, 
-              optimisticInnerFlux = optimisticInnerFlux, 
-              optimisticOuterFlux = optimisticOuterFlux))
 }
 ```
 
@@ -206,7 +198,7 @@ following default parameters:
 -   `effectiveTempCol = "st_teff"` - a vector listing the effective
     temperatures of host stars.
 -   `luminosityRatioCol = "luminosityRatio"` - a vector with the stellar
-    luminosity ratios, $L/L \\odot}$.
+    luminosity ratios, *L*/*L*⊙.
 
 These default column names are based on the variables in the [Planetary
 Systems Composite Parameters
@@ -375,7 +367,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Tue Oct 5 20:20:30 2021, the NASA Exoplanet Archive’s [Planetary
+As of Tue Oct 5 21:13:01 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -789,27 +781,11 @@ listHabitablePlanets <- habitableExoFinder(planetData, minTemp = 181, maxTemp = 
 knitr::kable(listHabitablePlanets)
 ```
 
-| pl\_name           | pl\_eqt | spectralClass | pl\_bmasse | pl\_rade | pl\_orbeccen | pl\_orbsmax |   innerHZ |   outerHZ | innerFlux | outerFlux |
-|:-------------------|--------:|:--------------|-----------:|---------:|-------------:|------------:|----------:|----------:|----------:|----------:|
-| GJ 180 c           |      NA | M             |      6.400 |    2.410 |        0.090 |    0.129000 | 0.0934020 | 0.2439176 |  1.490349 | 0.2185313 |
-| GJ 433 d           |      NA | M             |      5.223 |    2.140 |        0.070 |    0.178000 | 0.1497641 | 0.3893868 |  1.493428 | 0.2209213 |
-| GJ 832 c           |      NA | M             |      5.400 |    2.180 |        0.180 |    0.163000 | 0.1319321 | 0.3428377 |  1.493823 | 0.2212192 |
-| Wolf 1061 c        |      NA | M             |      3.410 |    1.660 |        0.110 |    0.089000 | 0.0827929 | 0.2165173 |  1.489407 | 0.2177783 |
-| GJ 682 b           |      NA | M             |      4.400 |    1.930 |        0.080 |    0.080000 | 0.0367596 | 0.0975721 |  1.479991 | 0.2100624 |
-| K2-288 B b         |  226.36 | M             |      4.270 |    1.900 |           NA |    0.164000 | 0.0888174 | 0.2322835 |  1.489375 | 0.2177525 |
-| Proxima Cen b      |  234.00 | M             |      1.270 |    1.080 |        0.350 |    0.048500 | 0.0323426 | 0.0857610 |  1.480643 | 0.2105817 |
-| GJ 273 b           |      NA | M             |      2.890 |    1.510 |        0.100 |    0.091101 | 0.0767897 | 0.2004276 |  1.490712 | 0.2188190 |
-| GJ 163 c           |      NA | M             |      6.800 |    2.500 |        0.099 |    0.125400 | 0.1144725 | 0.2970570 |  1.494849 | 0.2219834 |
-| GJ 667 C c         |      NA | M             |      3.800 |    1.770 |        0.020 |    0.125000 | 0.0959303 | 0.2507763 |  1.489665 | 0.2179853 |
-| GJ 1061 c          |      NA | M             |      1.740 |    1.180 |        0.290 |    0.035000 | 0.0339003 | 0.0902913 |  1.477721 | 0.2083091 |
-| Teegarden’s Star c |      NA | M             |      1.110 |    1.040 |        0.000 |    0.044300 | 0.0222295 | 0.0593377 |  1.476180 | 0.2071754 |
-| TOI-700 d          |  268.80 | M             |      1.570 |    1.144 |        0.111 |    0.163300 | 0.1245684 | 0.3238778 |  1.493428 | 0.2209213 |
-| GJ 1061 d          |      NA | M             |      1.640 |    1.160 |        0.530 |    0.054000 | 0.0339003 | 0.0902913 |  1.477721 | 0.2083091 |
-| Teegarden’s Star b |      NA | M             |      1.050 |    1.020 |        0.000 |    0.025200 | 0.0222295 | 0.0593377 |  1.476180 | 0.2071754 |
-| GJ 357 d           |  219.60 | M             |      6.100 |    2.340 |           NA |    0.204000 | 0.1031987 | 0.2677352 |  1.495036 | 0.2221208 |
+| pl\_name | pl\_eqt | spectralClass | pl\_bmasse | pl\_rade | pl\_orbeccen | pl\_orbsmax | innerHZ | outerHZ | innerFlux | outerFlux |
+|:---------|--------:|:--------------|-----------:|---------:|-------------:|------------:|--------:|--------:|----------:|----------:|
 
 Our combination of habitable zone distances, incident flux, effective
-temperatures, planet masses, and planet radii yield 16 potentially
+temperatures, planet masses, and planet radii yield 0 potentially
 habitable exoplanets.
 
 ## References
