@@ -18,7 +18,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(httr)
 library(jsonlite)
-library(DT)
 library(latex2exp)
 library(ggrepel)
 ```
@@ -30,7 +29,6 @@ To re-create this vignette in R, users are required to install:
 * **[tidyverse](https://www.tidyverse.org/)** - encompasses packages such as `dplyr` for subsetting data and `ggplot2` for creating layered graphics.  
 * **[httr](https://httr.r-lib.org/)** - supplies the `GET()` function to programmatically retrieve content from NASA Exoplanet Archive's [TAP service](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html#examples). 
 * **[jsonlite](https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html)** - supplies the `fromJSON()` function to simplify JSON content into an atomic vector.
-* **[DT](https://rstudio.github.io/DT/)** - suplies the `datatables()` function with "filtering, pagination, sorting, and many other features" in the tables". 
 * **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/). 
 * **[ggrepel](https://ggrepel.slowkow.com/)** - eliminate overlapping text labels in the `ggplot2` exoplanet mass-radius diagram.
 
@@ -44,12 +42,12 @@ This custom function programmatically retrieves data from the [NASA Exoplanet Ar
 * `startYear = 1989` - the earliest listing in the PSCompPars table, attributed to the planet [HD 114762 b](https://exoplanetarchive.ipac.caltech.edu/overview/HD%20114762%20b#planet_data_HD-114762-b).  
 * `endYear = as.integer(format(Sys.Date(), "%Y"))` - the current calendar year as understood by the user's computer. 
 * `controversial = 0` - exclude planets for which the confirmation status "has been questioned in the published literature". 
-* `cb_flag = 0` - exclude (0) planets which orbits a binary system. An options of `1` lists only planets which orbit two or more stars.
-* `format = json` = return queries in JSON format. You may also request data as a comma-separated-value file (CSV). 
+* `cb_flag = 0` - exclude (0) planets which orbits a binary system. An option of `1` lists only planets which orbit two or more stars.
+* `format = json` - return queries in JSON format. You may also request data as a comma-separated-value file (CSV). 
 
 ```{r , echo=TRUE, eval=TRUE}
-# Retrieve exoplanet names, discovery year, discovery method and its various other
-# parameters (and those of its star).
+# Retrieve names, discovery year, discovery method and various other
+# planetary and stellar parameters.
 # The default search begins in the year 1989 (earliest year in the pscomppars table)
 # and ends in the current calendar year: format(Sys.Date(), "%Y").
 annualExoDiscoveries <- function(tableName = "pscomppars", 

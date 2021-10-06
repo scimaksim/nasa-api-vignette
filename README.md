@@ -29,9 +29,6 @@ To re-create this vignette in R, users are required to install:
 -   **[jsonlite](https://cran.r-project.org/web/packages/jsonlite/vignettes/json-aaquickstart.html)** -
     supplies the `fromJSON()` function to simplify JSON content into an
     atomic vector.
--   **[DT](https://rstudio.github.io/DT/)** - suplies the `datatables()`
-    function with “filtering, pagination, sorting, and many other
-    features” in the tables".
 -   **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** -
     “an R package that parses and converts LaTeX math formulas to R’s
     plotmath expressions.” This is useful for labeling masses and radii
@@ -67,13 +64,13 @@ values for this function are:
 -   `controversial = 0` - exclude planets for which the confirmation
     status “has been questioned in the published literature.”
 -   `cb_flag = 0` - exclude (0) planets which orbits a binary system. An
-    options of `1` lists only planets which orbit two or more stars.
--   `format = json` = return queries in JSON format. You may also
+    option of `1` lists only planets which orbit two or more stars.
+-   `format = json` - return queries in JSON format. You may also
     request data as a comma-separated-value file (CSV).
 
 ``` r
-# Retrieve exoplanet names, discovery year, discovery method and its various other
-# parameters (and those of its star).
+# Retrieve names, discovery year, discovery method and various other
+# planetary and stellar parameters.
 # The default search begins in the year 1989 (earliest year in the pscomppars table)
 # and ends in the current calendar year: format(Sys.Date(), "%Y").
 annualExoDiscoveries <- function(tableName = "pscomppars", 
@@ -332,18 +329,18 @@ exoplanetData
 ```
 
     ## # A tibble: 4,462 × 20
-    ##    pl_name   disc_year discoverymethod
-    ##    <chr>         <int> <chr>          
-    ##  1 OGLE-201…      2020 Microlensing   
-    ##  2 GJ 480 b       2020 Radial Velocity
-    ##  3 Kepler-2…      2013 Transit        
-    ##  4 Kepler-8…      2016 Transit        
-    ##  5 K2-283 b       2018 Transit        
-    ##  6 Kepler-4…      2016 Transit        
-    ##  7 HAT-P-15…      2010 Transit        
-    ##  8 HD 14914…      2005 Radial Velocity
-    ##  9 HD 21070…      2007 Radial Velocity
-    ## 10 HIP 1296…      2010 Radial Velocity
+    ##    pl_name    disc_year discoverymethod
+    ##    <chr>          <int> <chr>          
+    ##  1 OGLE-2016…      2020 Microlensing   
+    ##  2 GJ 480 b        2020 Radial Velocity
+    ##  3 Kepler-27…      2013 Transit        
+    ##  4 Kepler-82…      2016 Transit        
+    ##  5 K2-283 b        2018 Transit        
+    ##  6 Kepler-47…      2016 Transit        
+    ##  7 HAT-P-15 b      2010 Transit        
+    ##  8 HD 149143…      2005 Radial Velocity
+    ##  9 HD 210702…      2007 Radial Velocity
+    ## 10 HIP 12961…      2010 Radial Velocity
     ## # … with 4,452 more rows, and 17 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
@@ -358,18 +355,18 @@ exoplanetData
 ```
 
     ## # A tibble: 4,462 × 20
-    ##    pl_name   disc_year discoverymethod
-    ##    <chr>         <int> <chr>          
-    ##  1 OGLE-201…      2020 Microlensing   
-    ##  2 GJ 480 b       2020 Radial Velocity
-    ##  3 Kepler-2…      2013 Transit        
-    ##  4 Kepler-8…      2016 Transit        
-    ##  5 K2-283 b       2018 Transit        
-    ##  6 Kepler-4…      2016 Transit        
-    ##  7 HAT-P-15…      2010 Transit        
-    ##  8 HD 14914…      2005 Radial Velocity
-    ##  9 HD 21070…      2007 Radial Velocity
-    ## 10 HIP 1296…      2010 Radial Velocity
+    ##    pl_name    disc_year discoverymethod
+    ##    <chr>          <int> <chr>          
+    ##  1 OGLE-2016…      2020 Microlensing   
+    ##  2 GJ 480 b        2020 Radial Velocity
+    ##  3 Kepler-27…      2013 Transit        
+    ##  4 Kepler-82…      2016 Transit        
+    ##  5 K2-283 b        2018 Transit        
+    ##  6 Kepler-47…      2016 Transit        
+    ##  7 HAT-P-15 b      2010 Transit        
+    ##  8 HD 149143…      2005 Radial Velocity
+    ##  9 HD 210702…      2007 Radial Velocity
+    ## 10 HIP 12961…      2010 Radial Velocity
     ## # … with 4,452 more rows, and 17 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
@@ -378,7 +375,7 @@ exoplanetData
     ## #   st_spectype <chr>, st_teff <dbl>,
     ## #   st_lum <dbl>, …
 
-As of Mon Oct 4 23:02:22 2021, the NASA Exoplanet Archive’s [Planetary
+As of Tue Oct 5 20:20:30 2021, the NASA Exoplanet Archive’s [Planetary
 Systems Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4501 confirmed exoplanet observations. The
@@ -449,18 +446,18 @@ circumbinaryPlanets
 ```
 
     ## # A tibble: 39 × 20
-    ##    pl_name   disc_year discoverymethod
-    ##    <chr>         <int> <chr>          
-    ##  1 NSVS 142…      2019 Eclipse Timing…
-    ##  2 RR Cae b       2012 Eclipse Timing…
-    ##  3 2MASS J1…      2015 Eclipse Timing…
-    ##  4 SR 12 AB…      2010 Imaging        
-    ##  5 MXB 1658…      2017 Eclipse Timing…
-    ##  6 Kepler-1…      2016 Transit        
-    ##  7 VHS J125…      2015 Imaging        
-    ##  8 2MASS J0…      2013 Imaging        
-    ##  9 Kepler-4…      2015 Transit        
-    ## 10 Kepler-3…      2011 Transit        
+    ##    pl_name    disc_year discoverymethod
+    ##    <chr>          <int> <chr>          
+    ##  1 NSVS 1425…      2019 Eclipse Timing…
+    ##  2 RR Cae b        2012 Eclipse Timing…
+    ##  3 2MASS J19…      2015 Eclipse Timing…
+    ##  4 SR 12 AB c      2010 Imaging        
+    ##  5 MXB 1658-…      2017 Eclipse Timing…
+    ##  6 Kepler-16…      2016 Transit        
+    ##  7 VHS J1256…      2015 Imaging        
+    ##  8 2MASS J01…      2013 Imaging        
+    ##  9 Kepler-45…      2015 Transit        
+    ## 10 Kepler-35…      2011 Transit        
     ## # … with 29 more rows, and 17 more
     ## #   variables: pl_orbper <dbl>,
     ## #   pl_rade <dbl>, pl_bmasse <dbl>,
@@ -673,11 +670,11 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
   geom_density()
 ```
 
-    ## Warning: Removed 7 rows containing
-    ## non-finite values (stat_bin).
+    ## Warning: Removed 7 rows containing non-finite
+    ## values (stat_bin).
 
-    ## Warning: Removed 7 rows containing
-    ## non-finite values (stat_density).
+    ## Warning: Removed 7 rows containing non-finite
+    ## values (stat_density).
 
 ![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
@@ -759,18 +756,18 @@ head(planetData, n = 10)
 ```
 
     ## # A tibble: 10 × 25
-    ##    pl_name   disc_year discoverymethod
-    ##    <chr>         <int> <chr>          
-    ##  1 OGLE-201…      2020 Microlensing   
-    ##  2 GJ 480 b       2020 Radial Velocity
-    ##  3 Kepler-2…      2013 Transit        
-    ##  4 Kepler-8…      2016 Transit        
-    ##  5 K2-283 b       2018 Transit        
-    ##  6 Kepler-4…      2016 Transit        
-    ##  7 HAT-P-15…      2010 Transit        
-    ##  8 HD 14914…      2005 Radial Velocity
-    ##  9 HD 21070…      2007 Radial Velocity
-    ## 10 HIP 1296…      2010 Radial Velocity
+    ##    pl_name    disc_year discoverymethod
+    ##    <chr>          <int> <chr>          
+    ##  1 OGLE-2016…      2020 Microlensing   
+    ##  2 GJ 480 b        2020 Radial Velocity
+    ##  3 Kepler-27…      2013 Transit        
+    ##  4 Kepler-82…      2016 Transit        
+    ##  5 K2-283 b        2018 Transit        
+    ##  6 Kepler-47…      2016 Transit        
+    ##  7 HAT-P-15 b      2010 Transit        
+    ##  8 HD 149143…      2005 Radial Velocity
+    ##  9 HD 210702…      2007 Radial Velocity
+    ## 10 HIP 12961…      2010 Radial Velocity
     ## # … with 22 more variables:
     ## #   pl_orbper <dbl>, pl_rade <dbl>,
     ## #   pl_bmasse <dbl>, pl_radj <dbl>,
