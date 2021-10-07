@@ -387,7 +387,7 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 | 1073.7600 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |  402.9150 |       0.2992265 |
 
-As of Wed Oct 6 22:16:37 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 22:18:26 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. We can
@@ -641,7 +641,6 @@ is little or no dependence on metallicity for low-mass planets such as
 super-Earths” (Hasegawa & Pudritz, 2014). In astronomy, “metals” are
 generally defined as “elements heavier than helium” and quantified as
 the logarithm of the ratio of iron to helium atoms relative to our Sun
-(\[*F**e*/*H*\] = *l**o**g*<sub>10</sub>\[*F**e*/*H*\]<sub>⋆</sub> − *l**o**g*<sub>10</sub>\[*F**e*/*H*\]<sub>⊙</sub>)
 (Mason (2008), Harrington (2011)). The Planetary Systems Composite
 Parameters (PSCompPars) table includes measurements for both iron
 abundance,\[Fe/H\], and general metal content, \[M/H\] (NASA Exoplanet
