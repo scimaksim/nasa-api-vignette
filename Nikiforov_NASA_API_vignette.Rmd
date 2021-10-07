@@ -36,6 +36,8 @@ To re-create this project in R, users are required to install:
 * **[latex2exp](https://cran.r-project.org/web/packages/latex2exp/vignettes/using-latex2exp.html)** - "an R package that parses and converts LaTeX math formulas to R’s plotmath expressions". This is useful for labeling masses and radii on plots using [solar system symbols](https://solarsystem.nasa.gov/resources/680/solar-system-symbols/). 
 * **[ggrepel](https://ggrepel.slowkow.com/)** - eliminate overlapping text labels in the `ggplot2` exoplanet mass-radius diagram.
 
+To those seeking to give reference to other works, [doi2bib](https://github.com/bibcure/doi2bib) is an optional, but highly convenient, Python module for generating BibTeX strings from Digital Object Identifiers (DOI). 
+
 ## Custom functions
 
 ### annualExoDiscoveries()
@@ -411,13 +413,19 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
 
 ### Metallicity correlations
 
-We can observe at least one more obvious trend from the data - that of the "giant planet–metallicity correlation" - whereby giant planets "tend to appear around metal-rich stars" [@geosciences9030105]. COonversely, "there is little or no dependence on metallicity for low-mass planets such as super-Earths" [@pub.1041145028]. If we use $10 M \oplus$ as the threshold for super-Earths and create a histogram for the metallicity distribution of stars in the exoplanet database, we find that lanets with masses of $10 M \oplus$ or less are centered around stars with [Fe/H] = 0. On the other hand, giant plants (those which exceed $10 M \oplus$) exhibit a slightly right-skewed distribution with a substantial concentration near [Fe/H] = 0.13.   
+We can observe at least one more obvious trend from the data - that of the "giant planet–metallicity correlation" - whereby giant planets "tend to appear around metal-rich stars" [@geosciences9030105]. Conversely, "there is little or no dependence on metallicity for low-mass planets such as super-Earths" [@pub.1041145028]. In astronomy, "metals" are generally defined as "elements heavier than helium" and quantified as the logarithm of the ratio of iron to helium atoms relative to our Sun (that is, $[Fe/H]=log_{10}(Fe/H)_{\star}-log_{10}(Fe/H)_{\odot}$) (@2008, @https://doi.org/10.1111/j.1945-5100.2011.01194.x). The Planetary Systems Composite Parameters (PSCompPars) table includes measurements for both iron abundance ([Fe/H]) and general metal content ([M/H]) (@https://doi.org/10.26133/nea13).
+
+We can use $10 M \oplus$ as the threshold for super-Earths and create a histogram for the metallicity distribution of stars in the exoplanet database. We find that planets with masses of $10 M \oplus$ or less are centered around stars with metal content that is comparable to or less than our Sun's ([Fe/H], [M/H] $\le 0$). On the other hand, giant plants (those which exceed $10 M \oplus$) exhibit a slightly right-skewed distribution with a substantial concentration near [Fe/H] = 0.13.   
 
 ```{r , echo=TRUE, eval=TRUE}
-metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
-                                                      !is.na(pl_bmasse))
-metallicityData %>% mutate(giantPlFlag = NA)
+# Subset data to include only observations with available mass and stellar
+# metallicity data
+metallicityData <- extendedDiscoveryProp %>% filter(!is.na(st_met) & 
+                                                      !is.na(pl_bmasse)) %>% 
+  mutate(giantPlFlag = NA)
 
+# Group planets that exceed 10 Earth masses into "giants", 
+# group everything smaller into "sub-giants"
 for (i in 1:length(metallicityData$pl_name)){
   if (metallicityData$pl_bmasse[i] >= 10){
     metallicityData$giantPlFlag[i] = "Giant"
@@ -429,27 +437,32 @@ for (i in 1:length(metallicityData$pl_name)){
   }
 }
 
+# Calculate median metallicity for both categories of planets
+medianMetallicity <- metallicityData %>% group_by(giantPlFlag) %>%
+  summarise(median=median(st_met))
+
+# Plot distribution of metal content, group by giant/sub-giant category.
 metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
 metallicityHisto + geom_histogram(aes(y = ..density.., 
                                       fill = giantPlFlag),
                                   bins = 50, color = "red") +
-  labs(x = "Stellar metallicity [Fe/H]",
+  labs(x = "Stellar metallicity - [Fe/H] and [M/H]",
        title = "The distribution of metallicity in giant and sub-giant planets",
        fill = "") + 
-  geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
+  geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag)) +
+  geom_vline(data = medianMetallicity, aes(xintercept=median, color=giantPlFlag),
+             linetype="dashed")
 ```
 
 
-An empirical cumulative distribution function affirms that, while 50% of sub-giant ($M < 10 M \oplus$) planets orbit a star with a metallicity [Fe/H] = 0, 50% of giant planets ($M >= 10 M \oplus$) orbit stars with a metallicity of [Fe/H] = 0.06.
+We can see the disparity in metallicity even more clearly with an empirical cumulative distribution function. While 50% of sub-giant ($M < 10 M \oplus$) planets orbit a star with a metallicity [Fe/H] = 0 (much like our Sun), 50% of giant planets ($M >= 10 M \oplus$) orbit stars with a comparatively higher metal abundance of 0.06.
 
 ```{r , echo=TRUE, eval=TRUE}
 # Render and label metallicity ECDF 
 metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
   labs(title="Empirical Cumulative Density Function \n Stellar Metallicity",
-     y = "ECDF", x="[Fe/H]", color = "Planet category")
-```
+     y = "ECDF", x="Metal content ([Fe/H], [M/H])", color = "Planet category")
 
-```{r , echo=TRUE, eval=TRUE}
 # Group data by planet status (giant/sub-giant) and calculate 
 # mean/median metallicity. 
 metallicityAverages <- metallicityData %>% group_by(giantPlFlag) %>%
@@ -462,7 +475,7 @@ knitr::kable(metallicityAverages,
 
 ### Mass-radius diagram
 
-Planets with radii in the range $10-15 R\oplus$ comprise 20% of our data set. The bulk of the remaining observations - more than 60% - consists of planets in the range of $0.1-5 R\oplus$. 
+Next, we can assess the distribution of planetary radii and masses in the data. 
 
 ```{r , echo=TRUE, eval=TRUE}
 radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
@@ -475,7 +488,9 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
   geom_density()
 ```
 
-By combining radii with the masses of planets, we can produce a mass-radius diagram and calculate planetary densities. From this diagram, it is also apparent that planetary radii tend to increase with mass until approximately $1000 M\oplus$, at which point gravity impels even the hardiest planetary material to compress and constrains further radial growth [@doi:10.1080/23746149.2019.1630316]. 
+Planets with radii in the range $10-15 R\oplus$ comprise 20% of available observations. The bulk of the remainder - more than 60% - consists of planets with a radius $0.1-5 R\oplus$.
+
+By combining radii with the masses of planets, we can produce a mass-radius diagram and calculate planetary densities.  
 
 ```{r , echo=TRUE, eval=TRUE, message=FALSE}
 # New vector with temporary data
@@ -496,6 +511,8 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
    labels = scales::trans_format("log10", scales::math_format(10^.x)))
 ```
 
+
+Here, it is apparent that planetary radii (as well as effective temperatures) tend to increase with mass until approximately $1000 M\oplus$, at which point gravity impels even the hardiest planetary material to compress and constrains further radial growth [@doi:10.1080/23746149.2019.1630316].
 
 ### Exoplanet habitability
 
@@ -518,7 +535,8 @@ planetData <- exoplanetData
 # and the solar flux incident on each exoplanet
 planetData <- hzFluxCalculator(planetData)
 
-head(planetData, n = 1000)
+# Sample of data with new columns appended to aid with habitability calculations
+tail(planetData, n = 5) %>% knitr::kable()
 ```
 
 Next, we supply this data frame to the `habitableExoFinder()` function alongside our criteria for habitability. In the code chunk below, we use effective temperatures in the range of $181-279$ Kelvin and planet radii in the range of $2.5-10 R \oplus$. 

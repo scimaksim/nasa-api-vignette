@@ -47,6 +47,11 @@ To re-create this project in R, users are required to install:
 -   **[ggrepel](https://ggrepel.slowkow.com/)** - eliminate overlapping
     text labels in the `ggplot2` exoplanet mass-radius diagram.
 
+To those seeking to give reference to other works,
+[doi2bib](https://github.com/bibcure/doi2bib) is an optional, but highly
+convenient, Python module for generating BibTeX strings from Digital
+Object Identifiers (DOI).
+
 ## Custom functions
 
 ### annualExoDiscoveries()
@@ -382,7 +387,7 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 | 1073.7600 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |  402.9150 |       0.2992265 |
 
-As of Wed Oct 6 18:09:07 2021, the archive’s [Planetary Systems
+As of Wed Oct 6 21:47:53 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
 (PSCompPars) table lists 4462 confirmed exoplanet observations. We can
@@ -436,7 +441,7 @@ annualDiscoveryBar + geom_bar(aes(fill = discoverymethod),
   coord_flip() 
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
 The contingency table below summarizes the cumulative number of
 observations for each discovery method.
@@ -590,7 +595,7 @@ orbsmaxBoxPlot + geom_boxplot() +
   annotation_logticks(sides="l")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-35-1.png)<!-- -->
 
 Direct imaging also favors young stars, which tend to be “self-luminous
 due to ongoing contraction and…accretion” (service), 2016). The
@@ -622,53 +627,44 @@ orbsmaxMassScatter + geom_point(aes(color = pl_orbeccen, shape = discoverymethod
        shape = "Discovery method") 
 ```
 
-    ## Warning: Removed 17 rows containing
-    ## missing values (geom_point).
+    ## Warning: Removed 17 rows containing missing values
+    ## (geom_point).
 
-![](README_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-36-1.png)<!-- -->
 
 ### Metallicity correlations
 
 We can observe at least one more obvious trend from the data - that of
 the “giant planet–metallicity correlation” - whereby giant planets “tend
-to appear around metal-rich stars” (Adibekyan, 2019). COonversely,
-“there is little or no dependence on metallicity for low-mass planets
-such as super-Earths” (Hasegawa & Pudritz, 2014). If we use 10*M*⊕ as
-the threshold for super-Earths and create a histogram for the
-metallicity distribution of stars in the exoplanet database, we find
-that lanets with masses of 10*M*⊕ or less are centered around stars with
-\[Fe/H\] = 0. On the other hand, giant plants (those which exceed
-10*M*⊕) exhibit a slightly right-skewed distribution with a substantial
-concentration near \[Fe/H\] = 0.13.
+to appear around metal-rich stars” (Adibekyan, 2019). Conversely, “there
+is little or no dependence on metallicity for low-mass planets such as
+super-Earths” (Hasegawa & Pudritz, 2014). In astronomy, “metals” are
+generally defined as “elements heavier than helium” and quantified as
+the logarithm of the ratio of iron to helium atoms relative to our Sun
+(that is,
+\[*F**e*/*H*\] = *l**o**g*<sub>10</sub>(*F**e*/*H*)<sub>⋆</sub> − *l**o**g*<sub>10</sub>(*F**e*/*H*)<sub>⊙</sub>)
+(Mason (2008), Harrington (2011)). The Planetary Systems Composite
+Parameters (PSCompPars) table includes measurements for both iron
+abundance (\[Fe/H\]) and general metal content (\[M/H\]) (NASA Exoplanet
+Science Institute (2020)).
+
+We can use 10*M*⊕ as the threshold for super-Earths and create a
+histogram for the metallicity distribution of stars in the exoplanet
+database. We find that planets with masses of 10*M*⊕ or less are
+centered around stars with metal content that is comparable to or less
+than our Sun’s (\[Fe/H\], \[M/H\]  ≤ 0). On the other hand, giant plants
+(those which exceed 10*M*⊕) exhibit a slightly right-skewed distribution
+with a substantial concentration near \[Fe/H\] = 0.13.
 
 ``` r
-metallicityData <- extendedDiscoveryProp %>% filter(st_metratio == "[Fe/H]" &
-                                                      !is.na(pl_bmasse))
-metallicityData %>% mutate(giantPlFlag = NA)
-```
+# Subset data to include only observations with available mass and stellar
+# metallicity data
+metallicityData <- extendedDiscoveryProp %>% filter(!is.na(st_met) & 
+                                                      !is.na(pl_bmasse)) %>% 
+  mutate(giantPlFlag = NA)
 
-    ## # A tibble: 3,459 × 24
-    ##    pl_name      disc_year
-    ##    <chr>            <int>
-    ##  1 Kepler-276 c      2013
-    ##  2 Kepler-829 b      2016
-    ##  3 K2-283 b          2018
-    ##  4 Kepler-477 b      2016
-    ##  5 HAT-P-15 b        2010
-    ##  6 HD 149143 b       2005
-    ##  7 HD 210702 b       2007
-    ##  8 HIP 12961 b       2010
-    ##  9 XO-5 b            2008
-    ## 10 HD 5608 b         2012
-    ## # … with 3,449 more rows, and 22
-    ## #   more variables:
-    ## #   discoverymethod <chr>,
-    ## #   pl_orbper <dbl>,
-    ## #   pl_rade <dbl>,
-    ## #   pl_bmasse <dbl>,
-    ## #   pl_radj <dbl>, …
-
-``` r
+# Group planets that exceed 10 Earth masses into "giants", 
+# group everything smaller into "sub-giants"
 for (i in 1:length(metallicityData$pl_name)){
   if (metallicityData$pl_bmasse[i] >= 10){
     metallicityData$giantPlFlag[i] = "Giant"
@@ -680,31 +676,39 @@ for (i in 1:length(metallicityData$pl_name)){
   }
 }
 
+# Calculate median metallicity for both categories of planets
+medianMetallicity <- metallicityData %>% group_by(giantPlFlag) %>%
+  summarise(median=median(st_met))
+
+# Plot distribution of metal content, group by giant/sub-giant category.
 metallicityHisto <- ggplot(metallicityData, aes(x = st_met))
 metallicityHisto + geom_histogram(aes(y = ..density.., 
                                       fill = giantPlFlag),
                                   bins = 50, color = "red") +
-  labs(x = "Stellar metallicity [Fe/H]",
+  labs(x = "Stellar metallicity - [Fe/H] and [M/H]",
        title = "The distribution of metallicity in giant and sub-giant planets",
        fill = "") + 
-  geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag))
+  geom_density(adjust = 0.5, alpha = 0.5, aes(fill = giantPlFlag)) +
+  geom_vline(data = medianMetallicity, aes(xintercept=median, color=giantPlFlag),
+             linetype="dashed")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-45-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-37-1.png)<!-- -->
 
-An empirical cumulative distribution function affirms that, while 50% of
-sub-giant (*M* &lt; 10*M*⊕) planets orbit a star with a metallicity
-\[Fe/H\] = 0, 50% of giant planets (*M* &gt;  = 10*M*⊕) orbit stars with
-a metallicity of \[Fe/H\] = 0.06.
+We can see the disparity in metallicity even more clearly with an
+empirical cumulative distribution function. While 50% of sub-giant
+(*M* &lt; 10*M*⊕) planets orbit a star with a metallicity \[Fe/H\] = 0
+(much like our Sun), 50% of giant planets (*M* &gt;  = 10*M*⊕) orbit
+stars with a comparatively higher metal abundance of 0.06.
 
 ``` r
 # Render and label metallicity ECDF 
 metallicityHisto + stat_ecdf(geom = "step", aes(color = giantPlFlag)) +
   labs(title="Empirical Cumulative Density Function \n Stellar Metallicity",
-     y = "ECDF", x="[Fe/H]", color = "Planet category")
+     y = "ECDF", x="Metal content ([Fe/H], [M/H])", color = "Planet category")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-46-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-38-1.png)<!-- -->
 
 ``` r
 # Group data by planet status (giant/sub-giant) and calculate 
@@ -718,14 +722,13 @@ knitr::kable(metallicityAverages,
 
 | Classification | Mean stellar metallicity \[dex\] | Median stellar metallicity \[dex\] |
 |:---------------|---------------------------------:|-----------------------------------:|
-| Giant          |                        0.0506846 |                               0.06 |
-| Sub-giant      |                       -0.0131614 |                               0.00 |
+| Giant          |                        0.0525300 |                               0.06 |
+| Sub-giant      |                       -0.0134767 |                               0.00 |
 
 ### Mass-radius diagram
 
-Planets with radii in the range 10 − 15*R*⊕ comprise 20% of our data
-set. The bulk of the remaining observations - more than 60% - consists
-of planets in the range of 0.1 − 5*R*⊕.
+Next, we can assess the distribution of planetary radii and masses in
+the data.
 
 ``` r
 radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
@@ -738,21 +741,20 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
   geom_density()
 ```
 
-    ## Warning: Removed 7 rows containing
-    ## non-finite values (stat_bin).
+    ## Warning: Removed 7 rows containing non-finite values
+    ## (stat_bin).
 
-    ## Warning: Removed 7 rows containing
-    ## non-finite values
+    ## Warning: Removed 7 rows containing non-finite values
     ## (stat_density).
 
-![](README_files/figure-gfm/unnamed-chunk-48-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-39-1.png)<!-- -->
+
+Planets with radii in the range 10 − 15*R*⊕ comprise 20% of available
+observations. The bulk of the remainder - more than 60% - consists of
+planets with a radius 0.1 − 5*R*⊕.
 
 By combining radii with the masses of planets, we can produce a
-mass-radius diagram and calculate planetary densities. From this
-diagram, it is also apparent that planetary radii tend to increase with
-mass until approximately 1000*M*⊕, at which point gravity impels even
-the hardiest planetary material to compress and constrains further
-radial growth (Hoolst et al., 2019).
+mass-radius diagram and calculate planetary densities.
 
 ``` r
 # New vector with temporary data
@@ -773,14 +775,18 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
    labels = scales::trans_format("log10", scales::math_format(10^.x)))
 ```
 
-    ## Warning: Removed 94 rows containing
-    ## missing values (geom_point).
+    ## Warning: Removed 94 rows containing missing values
+    ## (geom_point).
 
-    ## Warning: Removed 24 rows containing
-    ## missing values
+    ## Warning: Removed 24 rows containing missing values
     ## (geom_text_repel).
 
-![](README_files/figure-gfm/unnamed-chunk-49-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-40-1.png)<!-- -->
+
+Here, it is apparent that planetary radii (as well as effective
+temperatures) tend to increase with mass until approximately 1000*M*⊕,
+at which point gravity impels even the hardiest planetary material to
+compress and constrains further radial growth (Hoolst et al., 2019).
 
 ### Exoplanet habitability
 
@@ -822,29 +828,17 @@ planetData <- exoplanetData
 # and the solar flux incident on each exoplanet
 planetData <- hzFluxCalculator(planetData)
 
-head(planetData, n = 1000)
+# Sample of data with new columns appended to aid with habitability calculations
+tail(planetData, n = 5) %>% knitr::kable()
 ```
 
-    ## # A tibble: 1,000 × 28
-    ##    pl_name               disc_year
-    ##    <chr>                     <int>
-    ##  1 OGLE-2016-BLG-1227L b      2020
-    ##  2 GJ 480 b                   2020
-    ##  3 Kepler-276 c               2013
-    ##  4 Kepler-829 b               2016
-    ##  5 K2-283 b                   2018
-    ##  6 Kepler-477 b               2016
-    ##  7 HAT-P-15 b                 2010
-    ##  8 HD 149143 b                2005
-    ##  9 HD 210702 b                2007
-    ## 10 HIP 12961 b                2010
-    ## # … with 990 more rows, and 26
-    ## #   more variables:
-    ## #   discoverymethod <chr>,
-    ## #   pl_orbper <dbl>,
-    ## #   pl_rade <dbl>,
-    ## #   pl_bmasse <dbl>,
-    ## #   pl_radj <dbl>, …
+|      | pl\_name   | disc\_year | discoverymethod | pl\_orbper | pl\_rade | pl\_bmasse | pl\_radj | pl\_bmassj | pl\_eqt | pl\_dens | st\_spectype | st\_teff | st\_lum | pl\_controv\_flag | pl\_orbeccen | pl\_orbsmax | st\_mass | st\_metratio | st\_met | sy\_snum | sy\_pnum | sy\_dist | luminosityRatio | spectralClass |   innerHZ |  outerHZ | innerFlux | outerFlux |
+|:-----|:-----------|-----------:|:----------------|-----------:|---------:|-----------:|---------:|-----------:|--------:|---------:|:-------------|---------:|--------:|------------------:|-------------:|------------:|---------:|:-------------|--------:|---------:|---------:|---------:|----------------:|:--------------|----------:|---------:|----------:|----------:|
+| 4458 | K2-358 b   |       2021 | Transit         |  11.251029 |    2.680 |     7.6500 |    0.239 |     0.0241 |     888 |     2.18 | NA           |     5650 |  -0.161 |                 0 |           NA |      0.0863 |     0.93 | \[Fe/H\]     |   -0.07 |        1 |        1 |  480.307 |       0.6902398 | NA            | 0.6282663 | 1.485430 |  1.748689 | 0.3128209 |
+| 4459 | K2-357 b   |       2021 | Transit         |  16.348864 |    3.720 |    13.4000 |    0.332 |     0.0420 |     735 |     1.43 | NA           |     5794 |  -0.066 |                 0 |           NA |      0.1450 |     0.98 | \[Fe/H\]     |   -0.02 |        1 |        1 |  517.687 |       0.8590135 | NA            |        NA |       NA |        NA |        NA |
+| 4460 | K2-356 b   |       2021 | Transit         |  21.026737 |    2.290 |     5.8600 |    0.204 |     0.0184 |     624 |     2.68 | NA           |     5568 |  -0.244 |                 0 |           NA |      0.1599 |     0.90 | \[Fe/H\]     |   -0.11 |        1 |        1 |  355.540 |       0.5701643 | NA            | 0.5737584 | 1.359842 |  1.731976 | 0.3083353 |
+| 4461 | K2-355 b   |       2021 | Transit         |   5.738565 |    2.250 |     5.6900 |    0.201 |     0.0179 |    1066 |     2.74 | NA           |     5790 |  -0.115 |                 0 |           NA |      0.0632 |     0.96 | \[Fe/H\]     |   -0.12 |        1 |        1 |  500.497 |       0.7673615 | NA            | 0.6569271 | 1.547208 |  1.778139 | 0.3205548 |
+| 4462 | TOI-1518 b |       2021 | Transit         |   1.902603 |   21.017 |   731.0053 |    1.875 |     2.3000 |    2492 |       NA | F0           |     7300 |   1.462 |                 0 |         0.01 |      0.0389 |     1.79 | \[Fe/H\]     |   -0.10 |        1 |        1 |  225.888 |      28.9734359 | F             |        NA |       NA |        NA |        NA |
 
 Next, we supply this data frame to the `habitableExoFinder()` function
 alongside our criteria for habitability. In the code chunk below, we use
@@ -895,6 +889,15 @@ metallicity. *Geosciences*, *9*(3).
 
 </div>
 
+<div id="ref-https://doi.org/10.1111/j.1945-5100.2011.01194.x"
+class="csl-entry">
+
+Harrington, J. (2011). Transiting exoplanets, by c. haswell.
+*Meteoritics & Planetary Science*, *46*(5), 767–768.
+https://doi.org/<https://doi.org/10.1111/j.1945-5100.2011.01194.x>
+
+</div>
+
 <div id="ref-pub.1041145028" class="csl-entry">
 
 Hasegawa, Y., & Pudritz, R. E. (2014). PLANET TRAPS AND PLANETARY CORES:
@@ -925,6 +928,13 @@ Journal*, *787*(2), L29. <https://doi.org/10.1088/2041-8205/787/2/l29>
 Kuchner, M. J. (2003). Volatile-rich earth-mass planets in the habitable
 zone. *The Astrophysical Journal*, *596*(1), l105–l108.
 <https://doi.org/10.1086/378397>
+
+</div>
+
+<div id="ref-2008" class="csl-entry">
+
+Mason, J. W. (Ed.). (2008). *Exoplanets*. Springer Berlin Heidelberg.
+<https://doi.org/10.1007/978-3-540-74008-7>
 
 </div>
 
