@@ -478,7 +478,11 @@ knitr::kable(metallicityAverages,
 Next, we can assess the distribution of planetary radii and masses in the data. 
 
 ```{r , echo=TRUE, eval=TRUE}
-radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
+# Remove rows with missing radii
+massRadiiData <- annualDiscoveries %>% filter(!is.na(pl_rade))
+
+# Plot histogram of planetary radii
+radiiFreq <- ggplot(massRadiiData, aes(x = pl_rade)) 
 radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b", 
                            aes(y = (..count..)/sum(..count..)),
                            binwidth = 2) +
@@ -490,11 +494,13 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
 
 Planets with radii in the range $10-15 R\oplus$ comprise 20% of available observations. The bulk of the remainder - more than 60% - consists of planets with a radius $0.1-5 R\oplus$.
 
-By combining radii with the masses of planets, we can produce a mass-radius diagram and calculate planetary densities.  
+By combining radii with the masses of planets, we can calculate planetary densities and produce a mass-radius diagram.  
 
 ```{r , echo=TRUE, eval=TRUE, message=FALSE}
-# New vector with temporary data
-tempMassData <- exoplanetData 
+# New vector with temporary data, subset to remove missing observations
+tempMassData <- exoplanetData %>% 
+  filter(!is.na(pl_bmasse) & !is.na(pl_rade) & 
+           !is.na(pl_eqt) & !is.na(pl_dens))
 
 # Scatter plot of masses/radii for discovered exoplanets
 # Use LaTeX to denote the standard astronomical symbol for the Earth

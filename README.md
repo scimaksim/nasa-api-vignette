@@ -349,7 +349,7 @@ exoplanetData <- annualExoDiscoveries()
 str(exoplanetData)
 ```
 
-    ## 'data.frame':    4462 obs. of  23 variables:
+    ## 'data.frame':    4465 obs. of  23 variables:
     ##  $ pl_name        : chr  "OGLE-2016-BLG-1227L b" "GJ 480 b" "Kepler-276 c" "Kepler-829 b" ...
     ##  $ disc_year      : int  2020 2020 2013 2016 2018 2016 2010 2005 2007 2010 ...
     ##  $ discoverymethod: chr  "Microlensing" "Radial Velocity" "Transit" "Transit" ...
@@ -387,10 +387,10 @@ head(exoplanetData, n = 5) %>% knitr::kable()
 | Kepler-829 b          |       2016 | Transit         |   6.883376 |     2.11 |        5.1 |    0.188 |    0.01600 |     857 |    2.980 | NA           |     5698 |   0.040 |                 0 |          0.0 |      0.0678 |     0.98 | \[Fe/H\]     |    0.03 |        1 |        1 | 1073.7600 |       1.0964782 |
 | K2-283 b              |       2018 | Transit         |   1.921036 |     3.52 |       12.2 |    0.314 |    0.03830 |    1186 |    1.540 | NA           |     5060 |  -0.524 |                 0 |           NA |      0.0291 |     0.89 | \[Fe/H\]     |    0.28 |        1 |        1 |  402.9150 |       0.2992265 |
 
-As of Wed Oct 6 22:18:26 2021, the archive’s [Planetary Systems
+As of Thu Oct 7 21:08:03 2021, the archive’s [Planetary Systems
 Composite
 Parameters](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
-(PSCompPars) table lists 4462 confirmed exoplanet observations. We can
+(PSCompPars) table lists 4465 confirmed exoplanet observations. We can
 compare the composition of their extrasolar systems against that of our
 own.
 
@@ -404,12 +404,12 @@ starPlanetFreq
 
     ##       1    2    3    4    5    6    7    8
     ##                                           
-    ## 1  2312  950  438  212   95   41    7    8
+    ## 1  2315  950  438  212   95   41    7    8
     ## 2   200   57   39   32   15    6    0    0
     ## 3    34    8    0    0    7    0    0    0
     ## 4     1    0    0    0    0    0    0    0
 
-2312 planets - more than 51.8% of all observed - orbit a single star and
+2315 planets - more than 51.8% of all observed - orbit a single star and
 have no other planetary companions. Another 950 planets (21.3%) have one
 star and two companion planets. 7 systems are particularly interesting,
 with three stars and five planets in their system. One observations
@@ -466,11 +466,11 @@ knitr::kable(discoveriesByMethod,
 | Pulsar Timing                 |         6 |
 | Pulsation Timing Variations   |         2 |
 | Radial Velocity               |       870 |
-| Transit                       |      3398 |
+| Transit                       |      3401 |
 | Transit Timing Variations     |        22 |
 
 2014 and 2016 appear as the most prolific years for discovery. Of the
-known 4462 exoplanets, 76.2% were observed while transiting their host
+known 4465 exoplanets, 76.2% were observed while transiting their host
 star and temporarily reducing its brightness. Another 19.5% were
 observed indirectly via the radial velocity method, whereby the planet
 and its star orbit around a common center of gravity and prompt
@@ -560,10 +560,10 @@ knitr::kable(discoverySummaries,
 
 | Discovery method | Mean SMA (AU) | Median SMA (AU) |
 |:-----------------|--------------:|----------------:|
-| Imaging          |   617.2953488 |       162.00000 |
-| Microlensing     |     2.6744455 |         2.25000 |
-| Radial Velocity  |     1.6044780 |         1.02000 |
-| Transit          |     0.1261105 |         0.07875 |
+| Imaging          |   617.2953488 |        162.0000 |
+| Microlensing     |     2.6744455 |          2.2500 |
+| Radial Velocity  |     1.6044780 |          1.0200 |
+| Transit          |     0.1260719 |          0.0787 |
 
 The transit, radial velocity, and microlensing methods favor the
 detection of planets which orbit their star at an average distance of
@@ -720,7 +720,7 @@ knitr::kable(metallicityAverages,
 
 | Classification | Mean stellar metallicity \[dex\] | Median stellar metallicity \[dex\] |
 |:---------------|---------------------------------:|-----------------------------------:|
-| Giant          |                        0.0525300 |                               0.06 |
+| Giant          |                        0.0524293 |                               0.06 |
 | Sub-giant      |                       -0.0134767 |                               0.00 |
 
 ### Mass-radius diagram
@@ -729,7 +729,11 @@ Next, we can assess the distribution of planetary radii and masses in
 the data.
 
 ``` r
-radiiFreq <- ggplot(annualDiscoveries, aes(x = pl_rade)) 
+# Remove rows with missing radii
+massRadiiData <- annualDiscoveries %>% filter(!is.na(pl_rade))
+
+# Plot histogram of planetary radii
+radiiFreq <- ggplot(massRadiiData, aes(x = pl_rade)) 
 radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b", 
                            aes(y = (..count..)/sum(..count..)),
                            binwidth = 2) +
@@ -739,24 +743,20 @@ radiiFreq + geom_histogram(color = "#123456", fill = "#f7a22b",
   geom_density()
 ```
 
-    ## Warning: Removed 7 rows containing non-finite
-    ## values (stat_bin).
-
-    ## Warning: Removed 7 rows containing non-finite
-    ## values (stat_density).
-
 ![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 Planets with radii in the range 10 − 15*R*⊕ comprise 20% of available
 observations. The bulk of the remainder - more than 60% - consists of
 planets with a radius 0.1 − 5*R*⊕.
 
-By combining radii with the masses of planets, we can produce a
-mass-radius diagram and calculate planetary densities.
+By combining radii with the masses of planets, we can calculate
+planetary densities and produce a mass-radius diagram.
 
 ``` r
-# New vector with temporary data
-tempMassData <- exoplanetData 
+# New vector with temporary data, subset to remove missing observations
+tempMassData <- exoplanetData %>% 
+  filter(!is.na(pl_bmasse) & !is.na(pl_rade) & 
+           !is.na(pl_eqt) & !is.na(pl_dens))
 
 # Scatter plot of masses/radii for discovered exoplanets
 # Use LaTeX to denote the standard astronomical symbol for the Earth
@@ -773,12 +773,6 @@ tempMassScatter + geom_point(aes(col = pl_eqt, size = pl_dens), alpha = 0.6, pos
    labels = scales::trans_format("log10", scales::math_format(10^.x)))
 ```
 
-    ## Warning: Removed 94 rows containing missing
-    ## values (geom_point).
-
-    ## Warning: Removed 24 rows containing missing
-    ## values (geom_text_repel).
-
 ![](README_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 Here, it is apparent that planetary radii (as well as effective
@@ -788,7 +782,7 @@ compress and constrains further radial growth (Hoolst et al., 2019).
 
 ### Exoplanet habitability
 
-Among the 4462 exoplanets in the NASA Exoplanet Archive, which have the
+Among the 4465 exoplanets in the NASA Exoplanet Archive, which have the
 potential to harbor life? The [Planetary Habitability
 Laboratory](http://phl.upr.edu/projects/habitable-exoplanets-catalog/methods)
 (PHL) attempts to answer this by narrowing conditions such that
@@ -832,11 +826,11 @@ tail(planetData, n = 5) %>% knitr::kable()
 
 |      | pl\_name   | disc\_year | discoverymethod | pl\_orbper | pl\_rade | pl\_bmasse | pl\_radj | pl\_bmassj | pl\_eqt | pl\_dens | st\_spectype | st\_teff | st\_lum | pl\_controv\_flag | pl\_orbeccen | pl\_orbsmax | st\_mass | st\_metratio | st\_met | sy\_snum | sy\_pnum | sy\_dist | luminosityRatio | spectralClass |   innerHZ |  outerHZ | innerFlux | outerFlux |
 |:-----|:-----------|-----------:|:----------------|-----------:|---------:|-----------:|---------:|-----------:|--------:|---------:|:-------------|---------:|--------:|------------------:|-------------:|------------:|---------:|:-------------|--------:|---------:|---------:|---------:|----------------:|:--------------|----------:|---------:|----------:|----------:|
-| 4458 | K2-358 b   |       2021 | Transit         |  11.251029 |    2.680 |     7.6500 |    0.239 |     0.0241 |     888 |     2.18 | NA           |     5650 |  -0.161 |                 0 |           NA |      0.0863 |     0.93 | \[Fe/H\]     |   -0.07 |        1 |        1 |  480.307 |       0.6902398 | NA            | 0.6282663 | 1.485430 |  1.748689 | 0.3128209 |
-| 4459 | K2-357 b   |       2021 | Transit         |  16.348864 |    3.720 |    13.4000 |    0.332 |     0.0420 |     735 |     1.43 | NA           |     5794 |  -0.066 |                 0 |           NA |      0.1450 |     0.98 | \[Fe/H\]     |   -0.02 |        1 |        1 |  517.687 |       0.8590135 | NA            |        NA |       NA |        NA |        NA |
-| 4460 | K2-356 b   |       2021 | Transit         |  21.026737 |    2.290 |     5.8600 |    0.204 |     0.0184 |     624 |     2.68 | NA           |     5568 |  -0.244 |                 0 |           NA |      0.1599 |     0.90 | \[Fe/H\]     |   -0.11 |        1 |        1 |  355.540 |       0.5701643 | NA            | 0.5737584 | 1.359842 |  1.731976 | 0.3083353 |
-| 4461 | K2-355 b   |       2021 | Transit         |   5.738565 |    2.250 |     5.6900 |    0.201 |     0.0179 |    1066 |     2.74 | NA           |     5790 |  -0.115 |                 0 |           NA |      0.0632 |     0.96 | \[Fe/H\]     |   -0.12 |        1 |        1 |  500.497 |       0.7673615 | NA            | 0.6569271 | 1.547208 |  1.778139 | 0.3205548 |
-| 4462 | TOI-1518 b |       2021 | Transit         |   1.902603 |   21.017 |   731.0053 |    1.875 |     2.3000 |    2492 |       NA | F0           |     7300 |   1.462 |                 0 |         0.01 |      0.0389 |     1.79 | \[Fe/H\]     |   -0.10 |        1 |        1 |  225.888 |      28.9734359 | F             |        NA |       NA |        NA |        NA |
+| 4461 | K2-358 b   |       2021 | Transit         |  11.251029 |    2.680 |     7.6500 |    0.239 |     0.0241 |     888 |     2.18 | NA           |     5650 |  -0.161 |                 0 |           NA |      0.0863 |     0.93 | \[Fe/H\]     |   -0.07 |        1 |        1 |  480.307 |       0.6902398 | NA            | 0.6282663 | 1.485430 |  1.748689 | 0.3128209 |
+| 4462 | K2-357 b   |       2021 | Transit         |  16.348864 |    3.720 |    13.4000 |    0.332 |     0.0420 |     735 |     1.43 | NA           |     5794 |  -0.066 |                 0 |           NA |      0.1450 |     0.98 | \[Fe/H\]     |   -0.02 |        1 |        1 |  517.687 |       0.8590135 | NA            |        NA |       NA |        NA |        NA |
+| 4463 | K2-356 b   |       2021 | Transit         |  21.026737 |    2.290 |     5.8600 |    0.204 |     0.0184 |     624 |     2.68 | NA           |     5568 |  -0.244 |                 0 |           NA |      0.1599 |     0.90 | \[Fe/H\]     |   -0.11 |        1 |        1 |  355.540 |       0.5701643 | NA            | 0.5737584 | 1.359842 |  1.731976 | 0.3083353 |
+| 4464 | K2-355 b   |       2021 | Transit         |   5.738565 |    2.250 |     5.6900 |    0.201 |     0.0179 |    1066 |     2.74 | NA           |     5790 |  -0.115 |                 0 |           NA |      0.0632 |     0.96 | \[Fe/H\]     |   -0.12 |        1 |        1 |  500.497 |       0.7673615 | NA            | 0.6569271 | 1.547208 |  1.778139 | 0.3205548 |
+| 4465 | TOI-1518 b |       2021 | Transit         |   1.902603 |   21.017 |   731.0053 |    1.875 |     2.3000 |    2492 |       NA | F0           |     7300 |   1.462 |                 0 |         0.01 |      0.0389 |     1.79 | \[Fe/H\]     |   -0.10 |        1 |        1 |  225.888 |      28.9734359 | F             |        NA |       NA |        NA |        NA |
 
 Next, we supply this data frame to the `habitableExoFinder()` function
 alongside our criteria for habitability. In the code chunk below, we use
